@@ -1,6 +1,6 @@
 # Neovim Setup
 
-## Your first files
+## Installation
 
 Install Neovim on Ubuntu:
 
@@ -19,15 +19,24 @@ cd nvim
 vim .
 ```
 
-In Neovim open a new file with `%` called `init.lua`. In it write `print("hello")`.
+Replace the nvim folder with something like `nvim_primeagen_final` for a basic setup. It needs a package manager to run.
 
-Create a folder with `d` called `lua`.
+## Packer
 
-Cd into that folder and again with `d` create folder called `<your_name>`.
+In .config do:
 
-Cd into that folder as well and open a new file with `%` called `init.lua`. In it write `print("hello from <your_name>")`.
+```
+git clone --depth 1 https://github.com/wbthomason/packer.nvim\
+ ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+```
 
-Type `:w` to save and `:Ex`. In the original `init.lua` type `require("<your_name>")`.
+## Keybindings
 
-## The first remap
+abc
+:so
+:PackerSync
 
+:wq :q!   leader_pv  leader_pf  leader_ps  ctrl-P
+
+Echo syntax group name of word under cursor:
+:echo synIDattr(synID(line("."), col("."), 1), "name")
