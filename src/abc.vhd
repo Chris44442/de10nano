@@ -10,8 +10,9 @@ port (
 end counter;
 
 architecture rtl of counter is
-  signal clk_div : std_logic_vector (3 downto 0) := 4x"0";
   signal count : std_logic_vector (7 downto 0) := 8x"00";
+  signal clk_div : std_logic_vector (3 downto 0) := 4x"0";
+
 begin
 
 process (all) begin
