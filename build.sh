@@ -1,6 +1,6 @@
 #!/bin/bash
 QUARTUS_COMPILE_DIR_DE10=""
-source ~/.fpga_config_DE10
+source ~/.fpga_config_de10
 
 start=`date +%s`
 
