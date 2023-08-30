@@ -13,7 +13,7 @@ ssh root@$IP 'mkdir -p sdcard && mount /dev/mmcblk0p1 ~/sdcard'
 scp $RBF root@$IP:$RBF_HPS
 ssh root@$IP './fpga_rbf_load'
 
-TimeStampInHex=`ssh root@$IP 'memtool 0xff200000 1' | tail -c 10`
+TimeStampInHex=`ssh root@$IP 'memtool 0xff200004 1' | tail -c 10`
 date1=$(date -d @$(( 16#$TimeStampInHex )) '+%Y-%m-%d %H:%M')
 echo
 echo "Cyclone V 5CSEBA6U23I7 FPGA Image: " | GREP_COLOR="36" grep --color -P "Cyclone V 5CSEBA6U23I7 FPGA Image"
