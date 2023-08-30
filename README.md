@@ -1,12 +1,12 @@
 # DE10-Nano design for rapid prototyping
 
-This repository contains tools to build and test Firmware for the Terasic DE10-Nano.
+Yet another repo containing sources and tools for the famous Terasic DE10-Nano Cyclone V SoC board. The main purpose of this repo is to showcase how to rapidly test new prototype designs on hardware. FPGAs designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS to FPGA configuration interface, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test a new design to as low as two minutes.
 
 ## Dependencies
 
-Supported Operating Systems:
+Supported Host PC Operating Systems:
 
-- Ubuntu 22.04 (other distros might work too)
+- Any Linux distro that can run Quartus (tested on Ubuntu 22.04)
 - Windows 10
 
 Install the following packages on the system:
