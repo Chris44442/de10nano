@@ -1,0 +1,8 @@
+build
+src/incremental_db
+src/hps_isw_handoff
+src/db
+src/c5_pin_model_dump.txt
+src/hps_sdram_p0_summary.csv
+src/system.sopcinfo
+src/.qsys_edit
