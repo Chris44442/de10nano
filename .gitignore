@@ -5,4 +5,5 @@ src/db
 src/c5_pin_model_dump.txt
 src/hps_sdram_p0_summary.csv
 src/soc.sopcinfo
+src/DE10.qws
 src/.qsys_edit
