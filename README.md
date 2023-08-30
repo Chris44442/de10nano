@@ -1,6 +1,6 @@
-# DE10-Nano design for rapid prototyping
+# DE10-Nano Cyclone V SoC design for rapid prototyping
 
-Yet another repo containing sources and tools for the famous Terasic DE10-Nano Cyclone V SoC board. The main purpose of this repo is to showcase how to rapidly test new prototype designs on hardware. FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS to FPGA configuration interface, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test a new design to as low as two minutes.
+FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS to FPGA configuration interface, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. The target of choice is the Terasic DE10-Nano Cyclone V SoC board, mainly due to its immense popularity and amiable pricetag. This repo provides the necessary sources and tools to showcase rapid prototyping of new FPGA designs.
 
 ## Dependencies
 
