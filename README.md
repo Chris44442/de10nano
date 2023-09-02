@@ -192,33 +192,20 @@ sudo losetup --show -f de10_nano_sd.img
 # Typically: /dev/loopX where X is a number.
 ```
 
-Partition the image
+Run fdisk.
+
+
 
 ```
+# Partition the image
 sudo fdisk /dev/loopX
-```
-
-Make the U-Boot and SPL partition:
-
-```
+# Make the U-Boot and SPL partition:
 n <Enter>, p <Enter>, 3 <Enter>, <Enter>, +1M <Enter>, t <Enter>, a2 <Enter>
-```
-
-Make the kernel partition:
-
-```
+# Make the kernel partition:
 n <Enter>, p <Enter>, 1 <Enter>, <Enter>, +254M <Enter>, t <Enter>, 1 <Enter>, b <Enter>
-```
-
-Make the Root Filesystem partition:
-
-```
+# Make the Root Filesystem partition:
 n <Enter>, p <Enter>, 2 <Enter>, <Enter>, <Enter>
-```
-
-Check partitions:
-
-```
+# Check partitions:
 p <enter>
 ```
 
@@ -237,18 +224,7 @@ Write the partitions
 w <Enter>
 ```
 
-NB: The following command can instead be used to partition the disk in a scriptable (non-interactive) manner:
-
-```
-(
-echo n; echo p; echo 3; echo; echo +1M;   echo t; echo a2; # Make the U-Boot partition
-echo n; echo p; echo 1; echo; echo +254M; echo t; echo 1; echo b;  # Make kernel partition
-echo n; echo p; echo 2; echo; echo; # Make the root file system partition
-echo w; # Write the changes
-) | sudo fdisk /dev/loopX
-```
-
-It is normal to get error "Re-reading the partition table failed.: Invalid argument".
+Ignore the "Re-reading the partition table failed.: Invalid argument" error.
 
 Load the partitions:
 
@@ -302,7 +278,7 @@ sudo umount fat
 rm extlinux.conf
 ```
 
-Copy root filesystem. If you need to make changes to it, now is a good time. You might need to adjust the folder for rootfs.tar.
+Copy root filesystem. If you need to make changes to it, now is a good time. You might also need to adjust the folder for rootfs.tar.
 
 ```
 # cd to de10 directory
@@ -313,12 +289,15 @@ sudo tar -xf ../rootfs.tar.bz2
 # Useful changes can include setting up eth0 in /etc/network/interfaces with
 # auto eth0
 # iface eth0 inet static
-#   address 169.254.x.x # x can be your choice
+#   address 169.254.x.x # x being your choice
 #   netmask 255.255.0.0
 #   network 0.0.0.0
-#
-# And also setting up SSH in /etc/ssh/sshd_config: Enable root access, allow password authentication and empty password if you need.
-# Also add aliases like alias uh='ls -l --group-directories-first' in /etc/profile
+# And also setting up SSH in /etc/ssh/sshd_config: Enable root access, 
+# allow password authentication and empty password if you need.
+# Also add aliases like alias uh='ls -l --group-directories-first' in 
+# /etc/profile
+# For convenience place the previously built fpga_rbf_load file into 
+# /home/root/
 cd ..
 sudo umount ext4
 ```
@@ -341,14 +320,28 @@ sync
 
 Pop the SD card into the DE10 nano, and it should boot up into Buildroot.
 
-## HPS communication via USB
+## USB UART communication
 
-Use a serial device tool like tio to communicate with the HPS. Set the baud rate accordingly if necessary.
+Use a serial device tool like tio to communicate between the Host PC and the HPS via USB UART. Change the baud rate if necessary. Before booting the HPS, on the Host PC run:
 
 ```
 tio /dev/ttyUSB0
 tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
 ```
+
+You should be able to see the displayed logs of the bootloader and be able to log into Linux as root. If you set up Ethernet on the SD card as mentioned above, the eth0 link should come up once plugged in. Run `ip a` to find out your IP address. If you haven't already, you can customize the OS to your needs, e.g. set up SSH.
+
+## Ethernet communication
+
+Use SSH to communicate between the Host PC and the HPS via Ethernet. One of the main benefits is the seamless transfer of files like the rbf-file between Host PC and HPS. This way it is possible to flash a new rbf on the SD card within around three seconds, which is a huge benefit compared to the traditional flashing process which can take many minutes.
+
+The other obvious advantage is the ability to easily connect to the device as long as the Host PC and the device are in the same network.
+
+Run `util/warm_flash_and_config.sh` on the Host PC in order to flash and configure the FPGA remotely. The previously built `fpga_rbf_load` file needs to be in the `/home/root` directory as mentioned above. You also need the to have the rbf-file in the `build` folder.
+
+One way to observe the results is to have two rbfs with different LEDs flashing.
+
+Another way is to read and write on FPGA Memory Mapped Registers before reconfiguring the FPGA.
 
 ## Access the FPGA logic via HPS
 
