@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source ~/.fpga_config_de10
-IP=dummy
+IP=SOC_IP_DE10
 RBF="../build/DE10.rbf"
 RBF_HPS="~/sdcard/fpga.rbf"
 
@@ -26,3 +26,7 @@ minutes=`printf "%02d" $(( (runtime % 3600) / 60 ))`
 seconds=`printf "%02d" $(( (runtime % 3600) % 60 ))`
 
 echo -e "\nRuntime: $hours:$minutes:$seconds."
+
+echo
+echo TODO readimagemetainfo
+echo

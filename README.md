@@ -322,7 +322,7 @@ Pop the SD card into the DE10 nano, and it should boot up into Buildroot.
 
 ## USB UART communication
 
-Use a serial device tool like tio to communicate between the Host PC and the HPS via USB UART. Change the baud rate if necessary. Before booting the HPS, on the Host PC run:
+Use a serial device tool like **tio** to communicate between the Host PC and the HPS via USB UART. Change the baud rate if necessary. Before booting the HPS, on the Host PC run:
 
 ```
 tio /dev/ttyUSB0
@@ -333,7 +333,7 @@ You should be able to see the displayed logs of the bootloader and be able to lo
 
 ## Ethernet communication
 
-Use SSH to communicate between the Host PC and the HPS via Ethernet. One of the main benefits is the seamless transfer of files like the rbf-file between Host PC and HPS. This way it is possible to flash a new rbf on the SD card within around three seconds, which is a huge benefit compared to the traditional flashing process which can take many minutes.
+Use SSH to communicate between the Host PC and the HPS via Ethernet. One of the main benefits is the seamless transfer of files like the rbf-file between Host PC and HPS. This way it is possible to flash a new rbf on the SD card within around three seconds, which is a huge benefit compared to the traditional flashing process which can take many minutes. Use the Files an the util folder as a template for basic understanding on how SSH and SCP commands are utilized.
 
 The other obvious advantage is the ability to easily connect to the device as long as the Host PC and the device are in the same network.
 
