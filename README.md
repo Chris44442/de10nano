@@ -12,8 +12,8 @@ For the target hardware you need:
 - The DE10-Nano board itself
 - 5V power cable
 - Micro SD card with at least 1GB
-- USB Mini-B cable for UART communication with the HPS
-- LAN cable for Ethernet communication with the HPS
+- USB Mini-B cable for UART communication between Host-PC and HPS
+- LAN cable for Ethernet communication between Host-PC and HPS
 
 ## Files and Folders
 
