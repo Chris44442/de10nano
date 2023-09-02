@@ -64,7 +64,7 @@ You can clean up generated files with `git clean -fdx`.
 
 ## Build the FPGA Config Tool
 
-This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config).
+This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. There is also a precompiled binary `fpga_rbf_load` available.
 
 Run `make` in the `sw/fpga_config_tool` folder. You might need to get the appropiate cross compiler with:
 
