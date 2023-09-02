@@ -5,8 +5,8 @@ FPGA designs are notorious for being slow to deploy. Utilizing the power of embe
 ## Dependencies
 
 You will need:
-- Host PC with any Linux distro that can run Quartus (tested with Ubuntu 22.04), Windows 10 might work too
-- Quartus std or Lite for compilation (tested with 22.1)
+- Host PC with any Linux distro that can run Quartus (tested with Ubuntu 22.04)
+- Quartus std or Lite for the FPGA design compilation (tested with 22.1)
 
 For the target hardware you need:
 - The DE10-Nano board itself (tested with revision C)
@@ -19,11 +19,11 @@ For the target hardware you need:
 
 - **build** Generated folder for the built artefacts e.g. bitstream files
 - **doc** Documentation materials
-- **src** Source code
+- **src** FPGA design sources
 - **sw** Software that can be run on the ARM, or on Softcores if applicable
 - **test** Files for rtl simulation and hardware tests on target platform
 - **util** Utilities and hardware scripts, e.g. for flashing and configuring the FPGA
-- **build.sh** Bash script to build the FPGA/HPS design via Quartus
+- **build.sh** Bash script to build the FPGA design via Quartus
 
 ## Build the FPGA Design and the HPS
 
@@ -34,7 +34,7 @@ QUARTUS_COMPILE_DIR_DE10="~/intelFPGA/22.1std/quartus/bin/"
 SOC_IP_DE10="169.254.42.42"
 ```
 
-Run the `build.sh` script to build the design. It will generate QSYS and IP files, synthezise, place and route the FPGA design and build the rbf-file. If you're on Quartus Lite you might need to build via the GUI since script support is limited. In Lite it might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI, be sure to set it to passive parallel x16 and enable compression.
+Run the `build.sh` script to build the FPGA design. It will generate QSYS and IP files, synthezise, place and route the FPGA design and build the rbf-file. If you're running Quartus Lite you might need to build via the GUI since script support is limited. It might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI, set the options to passive parallel x16 and enable compression.
 
 You can clean up generated files with `git clean -fdx`.
 
@@ -94,7 +94,7 @@ export CROSS_COMPILE=$PWD/armv7-eabihf--glibc--stable-2020.08-1/bin/arm-linux-
 
 ### Build the u-boot bootloader
 
-Some versions of U-boot don't seem to work properly on the DE10-Nano, so it is recommended to stick with the version stated below.
+Some versions of u-boot don't seem to work properly on the DE10-Nano, so it is recommended to stick with the version stated below.
 
 Make sure CROSS_COMPILE variable is still set in the environment.
 
@@ -224,7 +224,7 @@ Write the partitions
 w <Enter>
 ```
 
-Ignore the "Re-reading the partition table failed.: Invalid argument" error.
+Ignore the usual "Re-reading the partition table failed.: Invalid argument" error.
 
 Load the partitions:
 
@@ -322,7 +322,7 @@ Pop the SD card into the DE10 nano, and it should boot up into Buildroot.
 
 ## USB UART communication
 
-Plug in the Mini-B USB cable into the J4 jack of the device. Use a serial device tool like **tio** to communicate between the Host PC and the HPS via USB UART. Change the baud rate if necessary. Before booting the HPS, on the Host PC run tio. Remember to change the values depending on which USB port of your Host PC you are using.
+Plug in the Mini-B USB cable into the J4 jack of the device. Use a serial device tool like **tio** to communicate between the Host PC and the HPS via USB UART. Change the baud rate if necessary. Before booting the HPS, on the Host PC run **tio**. Remember to change the values depending on which USB port of your Host PC you are using.
 
 ```
 tio /dev/ttyUSB0
