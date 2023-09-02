@@ -64,8 +64,17 @@ You can clean up generated files with `git clean -fdx`.
 
 ## Build the FPGA Config Tool
 
+This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config).
 
+Run `make` in the `sw/fpga_config_tool` folder. You might need to get the appropiate cross compiler with:
 
+```
+sudo apt install gcc-arm-linux-gnueabi
+```
+
+Ignore the ssh error during make. It should build `fpga_rbf_load`. This will eventually get used by `util/warm_flash_and_config.sh` to configure the FPGA from the OS.
+
+If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
 ## Build Buildroot
 
@@ -314,10 +323,6 @@ rm extlinux.conf
 ```
 
 Copy root filesystem. If you need to make changes to it, now is a good time. You might need to adjust the folder for rootfs.tar.
-
-Useful changes can include setting up eth0 in /etc/network/interfaces with
-
-
 
 ```
 # cd to de10 directory
