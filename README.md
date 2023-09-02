@@ -7,7 +7,7 @@ FPGA designs are notorious for being slow to deploy. Utilizing the power of embe
 Supported Host PC Operating Systems:
 
 - Any Linux distro that can run Quartus (tested on Ubuntu 22.04)
-- Windows 10
+- Windows 10 with WSl could also work
 
 Install the following packages on the system:
 
@@ -16,7 +16,7 @@ Install the following packages on the system:
 You will also need:
 
 - The DE10-Nano board
-- A prepared SD card with the Linux Console (kernel 4.5) v1.3 (2018-03-15) image from Terasic
+- An SD card
 - Micro USB and Ethernet cable for communication, power cable
 
 ## Files and Folders
@@ -62,12 +62,12 @@ Run the `build.sh` script to build the design. It will generate QSYS and IP file
 
 You can clean up generated files with `git clean -fdx`.
 
-## Build the fpga config tool
+## Build the FPGA Config Tool
 
 
 
 
-## Building Buildroot
+## Build Buildroot
 
 These instructions show how to build an SD card with the mainline Linux Kernel, U-Boot, and the Buildroot root file system.
 
@@ -343,6 +343,14 @@ sync
 
 Pop the SD card into the DE10 nano, and it should boot up into Buildroot.
 
+## HPS communication via USB
+
+Use a serial device tool like tio to communicate with the HPS. Set the baud rate accordingly if necessary.
+
+```
+tio
+tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
+```
 
 ## Access the FPGA logic via HPS
 
