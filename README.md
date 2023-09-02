@@ -1,6 +1,6 @@
 # DE10-Nano Cyclone V SoC example design for rapid prototyping
 
-FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS to FPGA configuration interface, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. The target of choice is the Terasic DE10-Nano Cyclone V SoC board, mainly due to its popularity and amiable pricetag. This repo provides the necessary sources and tools to showcase rapid prototyping of new FPGA designs.
+FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS FPGA Manager, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. The target of choice is the Terasic DE10-Nano Cyclone V SoC board, mainly due to its popularity and amiable pricetag. This repo provides the necessary sources and tools to showcase rapid prototyping of new FPGA designs.
 
 ## Dependencies
 
@@ -47,7 +47,9 @@ You can clean up generated files with `git clean -fdx`.
 
 ## Build the FPGA Config Tool
 
-This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. This is fully implemented in C using direct register access to take control of the FPGA Manager device which is used by the HPS to configure the FPGA. No external libraries are used other than Linux system calls and SoCAL libraries included on Quartus installations. Partial reconfiguration might be worth studying in the future.
+On a SoC the u-boot or OS can access the FPGA Manager in order to configure the FPGA. The FPGA Config Tool runs on any embedded Linux like Angstrom or Buildroot.
+
+This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. This is fully implemented in C using direct register access to take control of the FPGA Manager which is used by the HPS to configure the FPGA. No external libraries are used other than Linux system calls and SoCAL libraries included on Quartus installations. Partial reconfiguration might be worth studying in the future.
 
 Get the appropriate cross compiler with:
 
