@@ -34,7 +34,9 @@ QUARTUS_COMPILE_DIR_DE10="~/intelFPGA/22.1std/quartus/bin/"
 SOC_IP_DE10="169.254.42.42"
 ```
 
-Run the `build.sh` script to build the FPGA design. It will generate QSYS and IP files, synthezise, place and route the FPGA design and build the rbf-file. If you're running Quartus Lite you might need to build via the GUI since script support is limited. It might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI, set the options to passive parallel x16 and enable compression.
+Run the `build.sh` script to build the FPGA design. It will generate QSYS and IP files, synthezise, place and route the FPGA design and build the rbf-file.
+
+Note: If you're running Quartus Lite you might need to build via the GUI since script support is limited. It might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI, set the options to passive parallel x16 and enable compression.
 
 You can clean up generated files with `git clean -fdx`.
 
@@ -52,7 +54,7 @@ sudo apt install gcc-arm-linux-gnueabi
 
 In `sw/fpga_config_tool` run `make` to build `fpga_rbf_load`. This will later be used to configure the FPGA from the OS.
 
-If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
+Note: If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
 ## Build Buildroot
 
@@ -194,8 +196,6 @@ sudo losetup --show -f de10_nano_sd.img
 
 Run fdisk.
 
-
-
 ```
 # Partition the image
 sudo fdisk /dev/loopX
@@ -318,7 +318,7 @@ sudo dd if=de10_nano_sd.img of=/dev/sdX bs=64K status=progress
 sync
 ```
 
-Pop the SD card into the DE10 nano, and it should boot up into Buildroot.
+Put the SD card into the DE10 nano, and it should boot up into Buildroot.
 
 ## USB UART communication
 
