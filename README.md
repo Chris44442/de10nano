@@ -16,34 +16,21 @@ Install the following packages on the system:
 You will also need:
 
 - The DE10-Nano board
-- An SD card
-- Micro USB and Ethernet cable for communication, power cable
+- 5V power cable
+- Micro SD card with at least 1GB
+- USB Mini-B cable for UART communication with the HPS
+- LAN cable for Ethernet communication with the HPS
 
 ## Files and Folders
 
-- **build**  
-  Generated folder for the built artefacts e.g. bitstream files
-
-- **doc**  
-  Documentation materials
-
-- **src**  
-  Source code for building the design
-
-- **sw**  
-  Software examples that can be run on the HPS
-
-- **test**  
-  Testbench files and scripts for simulation tests of the Firmware via QuestaSim
-
-- **util**  
-  Utilities and hardware scripts, e.g. for programming the device
-
-- **build.sh**  
-  Bash script to build the design via Quartus
-
-- **readme.md**  
-  This readme file
+- **build** Generated folder for the built artefacts e.g. bitstream files
+- **doc** Documentation materials
+- **src** Source code for building the design
+- **sw** Software examples that can be run on the HPS
+- **test** Testbench files and scripts for simulation tests of the Firmware via QuestaSim
+- **util** Utilities and hardware scripts, e.g. for programming the device
+- **build.sh** Bash script to build the design via Quartus
+- **readme.md** This readme file
 
 ## Build the FPGA Design and the HPS
 
