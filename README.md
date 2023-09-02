@@ -322,14 +322,14 @@ Pop the SD card into the DE10 nano, and it should boot up into Buildroot.
 
 ## USB UART communication
 
-Use a serial device tool like **tio** to communicate between the Host PC and the HPS via USB UART. Change the baud rate if necessary. Before booting the HPS, on the Host PC run:
+Plug in the Mini-B USB cable into the J4 jack of the device. Use a serial device tool like **tio** to communicate between the Host PC and the HPS via USB UART. Change the baud rate if necessary. Before booting the HPS, on the Host PC run tio. Remember to change the values depending on which USB port of your Host PC you are using.
 
 ```
 tio /dev/ttyUSB0
 tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
 ```
 
-You should be able to see the displayed logs of the bootloader and be able to log into Linux as root. If you set up Ethernet on the SD card as mentioned above, the eth0 link should come up once plugged in. Run `ip a` to find out your IP address. If you haven't already, you can customize the OS to your needs, e.g. set up SSH.
+After powering up you should be able to see the displayed logs of the bootloader and be able to log into Linux as root. If you set up Ethernet on the SD card as mentioned above, the eth0 link should come up after a few seconds. Run `ip a` to find out your IP address. If you haven't already, you can customize the OS to your needs, e.g. set up SSH.
 
 ## Ethernet communication
 
@@ -337,7 +337,7 @@ Use SSH to communicate between the Host PC and the HPS via Ethernet. One of the 
 
 The other obvious advantage is the ability to easily connect to the device as long as the Host PC and the device are in the same network.
 
-Run `util/warm_flash_and_config.sh` on the Host PC in order to flash and configure the FPGA remotely. The previously built `fpga_rbf_load` file needs to be in the `/home/root` directory as mentioned above. You also need the to have the rbf-file in the `build` folder. Remember to keep the HPS configuration in the QSYS the same, or otherwise configuring such an rbf can fail, or even crash the HPS.
+Run `util/warm_flash_and_config.sh` on the Host PC in order to flash and configure the FPGA remotely. The previously built `fpga_rbf_load` file needs to be in the `/home/root` directory as mentioned above. You also need the to have the rbf-file in the `build` folder. Remember to keep the HPS IP configuration in the QSYS the same, or otherwise configuring such an rbf can fail, or even crash the HPS.
 
 One way to observe a successful FPGA reconfiguration is to consecutively configure two rbfs with different LEDs flashing.
 
