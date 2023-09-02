@@ -47,16 +47,14 @@ You will also need:
 
 ## Build the FPGA Design and the HPS
 
-You need to have the config file `.fpga_config_de10` present in your `~` home directory. It must contain the following (adjust to your machine):
+Clone or download this repository. The build and util scripts rely on you having the config file `.fpga_config_de10` present in your `~` home directory. It must contain the following (replace with your values):
 
 ```
 QUARTUS_COMPILE_DIR_DE10="~/intelFPGA/22.1std/quartus/bin/"
 SOC_IP_DE10="169.254.42.42"
 ```
 
-Clone or download this repository.
-
-Run the `build.sh` script to build the design. It will generate QSYS and IP files, synthezise, place and route the complete design and build the desired artefacts.
+Run the `build.sh` script to build the design. It will generate QSYS and IP files, synthezise, place and route the complete design and build the desired artefacts. If you're on Quartus Lite you might need to build via the GUI since script support is limited.
 
 You can clean up generated files with `git clean -fdx`.
 
