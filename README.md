@@ -70,7 +70,7 @@ Run `make` in the `sw/fpga_config_tool` folder. You might need to get the approp
 sudo apt install gcc-arm-linux-gnueabi
 ```
 
-Ignore the ssh error during make. It should still build `fpga_rbf_load`. This will eventually get used by `util/warm_flash_and_config.sh` to configure the FPGA from the OS.
+Ignore the ssh error during make. It should still build `fpga_rbf_load`. This will later be used to configure the FPGA from the OS.
 
 If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
