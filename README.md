@@ -25,12 +25,11 @@ You will also need:
 
 - **build** Generated folder for the built artefacts e.g. bitstream files
 - **doc** Documentation materials
-- **src** Source code for building the design
+- **src** Source code
 - **sw** Software that can be run on the ARM, or on Softcores if applicable
-- **test** Testbench files and scripts for simulation tests of the Firmware via QuestaSim
-- **util** Utilities and hardware scripts, e.g. for programming the device
-- **build.sh** Bash script to build the design via Quartus
-- **readme.md** This readme file
+- **test** Files for rtl simulation and hardware tests on target platform
+- **util** Utilities and hardware scripts, e.g. for flashing and configuring the FPGA
+- **build.sh** Bash script to build the FPGA/HPS design via Quartus
 
 ## Build the FPGA Design and the HPS
 
