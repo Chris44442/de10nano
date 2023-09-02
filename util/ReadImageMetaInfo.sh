@@ -12,5 +12,5 @@ IP=$SOC_IP_DE10
 # echo
 
 echo
-echo TODO
+echo TODO readimagemetainfo
 echo
