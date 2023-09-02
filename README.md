@@ -1,6 +1,6 @@
 # DE10-Nano Cyclone V SoC example design for rapid prototyping
 
-FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS FPGA Manager, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. This time, mainly due to its popularity and amiable pricetag, the target of choice is the Terasic DE10-Nano Cyclone V SoC board. This repo provides the necessary sources and tools to build a system on which you can rapidly prototype new FPGA designs.
+FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS FPGA Manager, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. This time, mainly due to its popularity and amiable pricetag, the target of choice is the Terasic DE10-Nano Cyclone V SoC board. This repo provides the necessary sources and tools to build a system on which you can rapidly prototype and test new FPGA designs.
 
 ## Dependencies
 
@@ -12,8 +12,8 @@ For the target hardware you need:
 - The DE10-Nano board itself
 - 5V power cable
 - Micro SD card with at least 1GB
-- USB Mini-B cable for UART communication between Host-PC and HPS
-- LAN cable for Ethernet communication between Host-PC and HPS
+- USB Mini-B cable for UART communication between Host PC and HPS
+- LAN cable for Ethernet communication between Host PC and HPS
 
 ## Files and Folders
 
@@ -34,7 +34,7 @@ QUARTUS_COMPILE_DIR_DE10="~/intelFPGA/22.1std/quartus/bin/"
 SOC_IP_DE10="169.254.42.42"
 ```
 
-Run the `build.sh` script to build the design. It will generate QSYS and IP files, synthezise, place and route the complete design and build the rbf. If you're on Quartus Lite you might need to build via the GUI since script support is limited. In Lite it might also be necessary to convert the sof to rbf manually in the GUI.
+Run the `build.sh` script to build the design. It will generate QSYS and IP files, synthezise, place and route the FPGA design and build the rbf-file. If you're on Quartus Lite you might need to build via the GUI since script support is limited. In Lite it might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI, be sure to set it to passive parallel x16 and enable compression.
 
 You can clean up generated files with `git clean -fdx`.
 
