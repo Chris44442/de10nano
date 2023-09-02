@@ -5,11 +5,11 @@ FPGA designs are notorious for being slow to deploy. Utilizing the power of embe
 ## Dependencies
 
 You will need:
-- Host PC with any Linux distro that can run Quartus (tested on Ubuntu 22.04), Windows 10 might work too
+- Host PC with any Linux distro that can run Quartus (tested with Ubuntu 22.04), Windows 10 might work too
 - Quartus std or Lite for compilation (tested with 22.1)
 
 For the target hardware you need:
-- The DE10-Nano board itself
+- The DE10-Nano board itself (tested with revision C)
 - 5V power cable
 - Micro SD card with at least 1GB
 - USB Mini-B cable for UART communication between Host PC and HPS
@@ -56,9 +56,9 @@ If you want to use this tool on other boards, you might need to change the line 
 
 ## Build Buildroot
 
-Understanding how to create an SD card that the HPS can boot Linux from scratch, can be quite daunting, especially for beginners. This Chapter 
+Understanding how to create a Linux bootable SD card for the HPS from scratch can be quite daunting, especially for beginners. This chapter was heavily inspired by other guides such as [[1]](https://wiki.trenz-electronic.de/pages/viewpage.action?pageId=94485703), [[2]](https://www.gibbard.me/linux_debian_de10/) and [[3]](https://www.rocketboards.org/foswiki/Documentation/BuildingBootloaderCycloneVAndArria10). The goal of this chapter is to make creating the SD card as straightforward and simple as possible.
 
-These instructions show how to build an SD card with the mainline Linux Kernel, U-Boot, and the Buildroot root file system.
+The following step by step instructions show how to build an SD card with the mainline Linux Kernel, U-Boot, and the Buildroot root file system.
 
 ### Prerequisites
 
