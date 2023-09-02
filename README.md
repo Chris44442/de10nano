@@ -1,21 +1,15 @@
 # DE10-Nano Cyclone V SoC example design for rapid prototyping
 
-FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS FPGA Manager, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. The target of choice is the Terasic DE10-Nano Cyclone V SoC board, mainly due to its popularity and amiable pricetag. This repo provides the necessary sources and tools to showcase rapid prototyping of new FPGA designs.
+FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS FPGA Manager, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. This time, mainly due to its popularity and amiable pricetag, the target of choice is the Terasic DE10-Nano Cyclone V SoC board. This repo provides the necessary sources and tools to build a system on which you can rapidly prototype new FPGA designs.
 
 ## Dependencies
 
-Supported Host PC Operating Systems:
+You will need:
+- Host PC with any Linux distro that can run Quartus (tested on Ubuntu 22.04), Windows 10 might work too
+- Quartus std or Lite for compilation (tested with 22.1)
 
-- Any Linux distro that can run Quartus (tested on Ubuntu 22.04)
-- Windows 10 with WSL might work too
-
-Install the following packages on the system:
-
-- Quartus 22.1std for compilation (other std and lite versions might work too)
-
-You will also need:
-
-- The DE10-Nano board
+For the target hardware you need:
+- The DE10-Nano board itself
 - 5V power cable
 - Micro SD card with at least 1GB
 - USB Mini-B cable for UART communication with the HPS
@@ -48,7 +42,7 @@ You can clean up generated files with `git clean -fdx`.
 
 On a SoC the u-boot or OS can access the FPGA Manager in order to configure the FPGA. The FPGA Config Tool runs on any embedded Linux like Angstrom or Buildroot.
 
-This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. This is fully implemented in C using direct register access to configure the FPGA via HPS FPGA Manager. Partial reconfiguration might be worth studying in the future.
+This tool was developed by [Nicolás Hasbún](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. It is fully implemented in C using direct register access to configure the FPGA via HPS FPGA Manager. Partial reconfiguration might be worth studying in the future.
 
 Get the appropriate cross compiler with:
 
@@ -61,6 +55,8 @@ In `sw/fpga_config_tool` run `make` to build `fpga_rbf_load`. This will later be
 If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
 ## Build Buildroot
+
+Understanding how to create an SD card that the HPS can boot Linux from scratch, can be quite daunting, especially for beginners. This Chapter 
 
 These instructions show how to build an SD card with the mainline Linux Kernel, U-Boot, and the Buildroot root file system.
 
