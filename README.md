@@ -1,13 +1,13 @@
-# DE10-Nano Cyclone V SoC design for rapid prototyping
+# DE10-Nano Cyclone V SoC example design for rapid prototyping
 
-FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS to FPGA configuration interface, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. The target of choice is the Terasic DE10-Nano Cyclone V SoC board, mainly due to its immense popularity and amiable pricetag. This repo provides the necessary sources and tools to showcase rapid prototyping of new FPGA designs.
+FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS to FPGA configuration interface, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. The target of choice is the Terasic DE10-Nano Cyclone V SoC board, mainly due to its popularity and amiable pricetag. This repo provides the necessary sources and tools to showcase rapid prototyping of new FPGA designs.
 
 ## Dependencies
 
 Supported Host PC Operating Systems:
 
 - Any Linux distro that can run Quartus (tested on Ubuntu 22.04)
-- Windows 10 with WSl could also work
+- Windows 10 with WSL might work too
 
 Install the following packages on the system:
 
@@ -21,31 +21,31 @@ You will also need:
 
 ## Files and Folders
 
-- **build**
+- **build**  
   Generated folder for the built artefacts e.g. bitstream files
 
-- **doc**
+- **doc**  
   Documentation materials
 
-- **src**
+- **src**  
   Source code for building the design
 
-- **sw**
+- **sw**  
   Software examples that can be run on the HPS
 
-- **test**
+- **test**  
   Testbench files and scripts for simulation tests of the Firmware via QuestaSim
 
-- **util**
+- **util**  
   Utilities and hardware scripts, e.g. for programming the device
 
-- **build.sh**
+- **build.sh**  
   Bash script to build the design via Quartus
 
-- **readme.md**
+- **readme.md**  
   This readme file
 
-## Setup
+## Build the FPGA Design and the HPS
 
 You need to have the config file `.fpga_config_de10` present in your `~` home directory. It must contain the following (adjust to your machine):
 
@@ -56,8 +56,6 @@ SOC_IP_DE10="169.254.42.42"
 
 Clone or download this repository.
 
-## Build the Design
-
 Run the `build.sh` script to build the design. It will generate QSYS and IP files, synthezise, place and route the complete design and build the desired artefacts.
 
 You can clean up generated files with `git clean -fdx`.
@@ -66,13 +64,13 @@ You can clean up generated files with `git clean -fdx`.
 
 This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. There is also a precompiled binary `fpga_rbf_load` available.
 
-Run `make` in the `sw/fpga_config_tool` folder. You might need to get the appropiate cross compiler with:
+Run `make` in the `sw/fpga_config_tool` folder. You might need to get the appropriate cross compiler with:
 
 ```
 sudo apt install gcc-arm-linux-gnueabi
 ```
 
-Ignore the ssh error during make. It should build `fpga_rbf_load`. This will eventually get used by `util/warm_flash_and_config.sh` to configure the FPGA from the OS.
+Ignore the ssh error during make. It should still build `fpga_rbf_load`. This will eventually get used by `util/warm_flash_and_config.sh` to configure the FPGA from the OS.
 
 If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
@@ -366,7 +364,7 @@ Pop the SD card into the DE10 nano, and it should boot up into Buildroot.
 Use a serial device tool like tio to communicate with the HPS. Set the baud rate accordingly if necessary.
 
 ```
-tio
+tio /dev/ttyUSB0
 tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
 ```
 
