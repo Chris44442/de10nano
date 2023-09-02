@@ -49,7 +49,7 @@ You can clean up generated files with `git clean -fdx`.
 
 On a SoC the u-boot or OS can access the FPGA Manager in order to configure the FPGA. The FPGA Config Tool runs on any embedded Linux like Angstrom or Buildroot.
 
-This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. This is fully implemented in C using direct register access to take control of the FPGA Manager which is used by the HPS to configure the FPGA. No external libraries are used other than Linux system calls and SoCAL libraries included on Quartus installations. Partial reconfiguration might be worth studying in the future.
+This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. This is fully implemented in C using direct register access to configure the FPGA via HPS FPGA Manager. Partial reconfiguration might be worth studying in the future.
 
 Get the appropriate cross compiler with:
 
