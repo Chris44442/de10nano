@@ -26,7 +26,7 @@ You will also need:
 - **build** Generated folder for the built artefacts e.g. bitstream files
 - **doc** Documentation materials
 - **src** Source code for building the design
-- **sw** Software examples that can be run on the HPS
+- **sw** Software that can be run on the ARM, or on Softcores if applicable
 - **test** Testbench files and scripts for simulation tests of the Firmware via QuestaSim
 - **util** Utilities and hardware scripts, e.g. for programming the device
 - **build.sh** Bash script to build the design via Quartus
