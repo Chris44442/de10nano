@@ -1,18 +1,5 @@
-################################################
-#
-# Makefile to Manage ->
-# DE10-Nano Programming FPGA from HPS Project
-#
-# Nicolas Hasbún A.
-# nhasbun@gmail.com
-# 12-05-2018 (dd-mm-yyyy)
-#
-################################################
-
-## DEFINE TARGET AND SOURCE CODE
 TARGET = fpga_rbf_load
 
-# Source Code
 SRCS=$(wildcard *.c functions/*.c)
 OBJECTS=$(SRCS:.c=.o)
 
@@ -29,34 +16,15 @@ CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)gcc
 ARCH = arm
 
-## UPLOAD FILES TO DE10NANO USING SSH
-# Parameters for SCP upload. Set up SSH keys to bypass password prompt
-SCP_TARGET_IP           = socfpga
-SCP_USER                = root
-SCP_TARGET_PATH         = /home/root/fpga_manager_test
-SCP                     = SCP
-SCP_FLAGS               = -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
-
-## BUILD (DEFAULT) RECIPE
 .PHONY: build
 build: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(LD) $(LDFLAGS)   $^ -o $@
-	make upload
 
 %.o : %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-## CLEAN RECIPE
 .PHONY: clean
 clean:
 	rm -f $(TARGET) *.a *.o *~
-
-## UPLOAD RECIPE
-.PHONY: upload
-upload:
-	@echo "*****************************************"
-	@echo "Subiendo archivo por SSH"
-	@echo "*****************************************"
-	$(SCP) $(SCP_FLAGS) $(TARGET) $(SCP_USER)@$(SCP_TARGET_IP):$(SCP_TARGET_PATH)
