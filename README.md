@@ -337,9 +337,9 @@ Use SSH to communicate between the Host PC and the HPS via Ethernet. One of the 
 
 The other obvious advantage is the ability to easily connect to the device as long as the Host PC and the device are in the same network.
 
-Run `util/warm_flash_and_config.sh` on the Host PC in order to flash and configure the FPGA remotely. The previously built `fpga_rbf_load` file needs to be in the `/home/root` directory as mentioned above. You also need the to have the rbf-file in the `build` folder. Remember to keep the HPS configuration in the QSYS the same, or otherwise configuring such an rbf can fail or even crash the HPS.
+Run `util/warm_flash_and_config.sh` on the Host PC in order to flash and configure the FPGA remotely. The previously built `fpga_rbf_load` file needs to be in the `/home/root` directory as mentioned above. You also need the to have the rbf-file in the `build` folder. Remember to keep the HPS configuration in the QSYS the same, or otherwise configuring such an rbf can fail, or even crash the HPS.
 
-One way to observe the results is to have two rbfs with different LEDs flashing.
+One way to observe a successful FPGA reconfiguration is to consecutively configure two rbfs with different LEDs flashing.
 
 Another way is to read and write on FPGA Memory Mapped Registers before reconfiguring the FPGA.
 
