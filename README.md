@@ -62,13 +62,15 @@ You can clean up generated files with `git clean -fdx`.
 
 ## Build the FPGA Config Tool
 
-This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. There is also a precompiled binary `fpga_rbf_load` available.
+This tool has been made by Nicolás Hasbún and is available on [his Github](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. This is fully implemented in C using direct register access to take control of the FPGA Manager device which is used by the HPS to configure the FPGA. No external libraries are used other than Linux system calls and SoCAL libraries included on Quartus installations. Partial reconfiguration might be worth studying in the future.
 
-Run `make` in the `sw/fpga_config_tool` folder. You might need to get the appropriate cross compiler with:
+Get the appropriate cross compiler with:
 
 ```
 sudo apt install gcc-arm-linux-gnueabi
 ```
+
+Run `make` in the `sw/fpga_config_tool` folder. 
 
 Ignore the ssh error during make. It should still build `fpga_rbf_load`. This will later be used to configure the FPGA from the OS.
 
