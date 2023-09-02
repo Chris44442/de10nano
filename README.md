@@ -313,7 +313,11 @@ sudo umount fat
 rm extlinux.conf
 ```
 
-Copy root filesystem
+Copy root filesystem. If you need to make changes to it, now is a good time. You might need to adjust the folder for rootfs.tar.
+
+Useful changes can include setting up eth0 in /etc/network/interfaces with
+
+
 
 ```
 # cd to de10 directory
@@ -321,6 +325,15 @@ mkdir ext4
 sudo mount /dev/loopXp2 ext4
 cd ext4
 sudo tar -xf ../rootfs.tar.bz2
+# Useful changes can include setting up eth0 in /etc/network/interfaces with
+# auto eth0
+# iface eth0 inet static
+#   address 169.254.x.x # x can be your choice
+#   netmask 255.255.0.0
+#   network 0.0.0.0
+#
+# And also setting up SSH in /etc/ssh/sshd_config: Enable root access, allow password authentication and empty password if you need.
+# Also add aliases like alias uh='ls -l --group-directories-first' in /etc/profile
 cd ..
 sudo umount ext4
 ```
