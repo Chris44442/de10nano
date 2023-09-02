@@ -9,7 +9,7 @@
 
 int fd; // file descriptor for memory access
 void * virtualbase; // puntero genérico con map de userspace a hw
-char rbf_file [32] = "sdcard/soc_system.rbf";
+char rbf_file [32] = "sdcard/fpga.rbf";
 
 int main(int argc, const char * argv[])
 {

@@ -62,6 +62,11 @@ Run the `build.sh` script to build the design. It will generate QSYS and IP file
 
 You can clean up generated files with `git clean -fdx`.
 
+## Build the fpga config tool
+
+
+
+
 ## Building Buildroot
 
 These instructions show how to build an SD card with the mainline Linux Kernel, U-Boot, and the Buildroot root file system.

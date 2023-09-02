@@ -24,14 +24,14 @@ HWLIBS_ROOT = $(SOCEDS_DEST_ROOT)/ip/altera/hps/altera_hps/hwlib
 CFLAGS = -g -std=c99 -Wall -Werror -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
 LDFLAGS = -g -std=c99 -Wall -Werror -pthread -lpthread
 
-CROSS_COMPILE = arm-linux-gnueabihf-
+CROSS_COMPILE = arm-linux-gnueabi-
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)gcc
 ARCH = arm
 
 ## UPLOAD FILES TO DE10NANO USING SSH
 # Parameters for SCP upload. Set up SSH keys to bypass password prompt
-SCP_TARGET_IP           = 169.254.123.123
+SCP_TARGET_IP           = socfpga
 SCP_USER                = root
 SCP_TARGET_PATH         = /home/root/fpga_manager_test
 SCP                     = SCP

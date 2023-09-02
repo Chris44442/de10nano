@@ -8,8 +8,8 @@
 #include <sys/mman.h> // mmap
 
 // The Altera SoC Abstraction Layer (SoCAL) API Reference Manual
-#include "socal/socal.h"
-#include "socal/hps.h"
+#include "socal.h"
+#include "hps.h"
 
 // Useful macros
 #define BIT(x,n) (((x) >> (n)) & 1)
