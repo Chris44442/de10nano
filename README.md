@@ -251,7 +251,7 @@ Copy over U-BOOT. Remember to change /dev/loopX the the right value.
 sudo dd if=./u-boot/u-boot-with-spl.sfp of=/dev/loopXp3 bs=64k seek=0 oflag=sync
 ```
 
-Copy Kernel and device tree. There is a copy of the dtb file in the repo as well.
+Copy Kernel and device tree. There is a copy of the dtb file in the `dts` folder as well.
 
 ```
 # cd to de10 directory
