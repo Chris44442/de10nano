@@ -330,7 +330,7 @@ After powering up you should be able to see the displayed logs of the bootloader
 
 For the following instructions be sure to have a working USB UART connection from your Host PC to the device.
 
-At this point it is possible to configure the FPGA from the OS by executing the `fpga_config_tool`. But you may also want the FPGA design to be configured by default during the booting sequence as well. Also the FPGA to HPS bridges must be enabled. To do so, after reseting the HPS, quickly interrupt the autoboot sequence by hitting return. In the u-boot console type:
+At this point it is possible to configure the FPGA from the OS. But first you may also want the FPGA design to be configured by default during the booting sequence as well. Also the FPGA to HPS bridges should be enabled by default if you intend to use them. To do so, after reseting the HPS, quickly interrupt the autoboot sequence by hitting return. In the u-boot console type:
 
 ```
 setenv load_fpga "load mmc 0:1 '\$loadaddr' fpga.rbf; dcache flush; fpga load 0 '\$loadaddr' '\$filesize'; bridge enable;"
@@ -340,7 +340,7 @@ saveenv
 
 You can now `run load_fpga` from the u-boot console to configure the FPGA design. From now on this command will also be run automatically during the booting sequence. Run `reset` to reboot or `run bootcmd` to boot into Linux.
 
-TODO Note: All of this can also be done during u-boot compilation.
+TODO Note: All of this can also be done during u-boot compilation so that no further changes in u-boot are required.
 
 ## Ethernet communication
 
