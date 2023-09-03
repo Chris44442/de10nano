@@ -96,8 +96,6 @@ export CROSS_COMPILE=$PWD/armv7-eabihf--glibc--stable-2020.08-1/bin/arm-linux-
 
 ### Build the u-boot bootloader
 
-Some versions of u-boot don't seem to work properly on the DE10-Nano, so it is recommended to stick with the version stated below.
-
 Make sure CROSS_COMPILE variable is still set in the environment.
 
 ```
@@ -105,7 +103,7 @@ Make sure CROSS_COMPILE variable is still set in the environment.
 git clone https://github.com/u-boot/u-boot.git
 cd u-boot
 # This is the latest version at time of writing
-git checkout v2021.07
+git checkout v2023.04
 # Configure the the DE10 nano Intel FPGA SoC
 make ARCH=arm socfpga_de10_nano_defconfig
 # Optional: run make ARCH=arm menuconfig to have a play around
@@ -326,7 +324,16 @@ tio /dev/ttyUSB0
 tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
 ```
 
-After powering up you should be able to see the displayed logs of the bootloader and be able to log into Linux as root. If you set up Ethernet on the SD card as mentioned above, the eth0 link should come up after a few seconds. Run `ip a` to find out your IP address. If you haven't already, you can customize the OS to your needs, e.g. set up SSH.
+After powering up you should be able to see the displayed logs of the bootloader. Some versions of u-boot require you to set the bootcmd variable which enables you to automatically boot into Linux. In some other versions this step is not necessary. In the u-boot console type:
+
+```
+setenv bootcmd "run distro_bootcmd"
+saveenv
+```
+
+Type `run bootcmd` to boot into Linux.
+
+If you set up Ethernet in /etc/network/interfaces on the SD card as mentioned above, the eth0 link should come up after a few seconds. Run `ip a` to find out your IP address. If you haven't already, you can now customize the OS to your needs, e.g. set up SSH.
 
 ## Loading the FPGA design in u-boot
 
