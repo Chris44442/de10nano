@@ -19,6 +19,7 @@ For the target hardware you need:
 
 - **build** Generated folder for the built artefacts e.g. bitstream files
 - **doc** Documentation materials
+- **dts** DE10-Nano Device Tree files
 - **src** FPGA design sources
 - **sw** Software that can be run on the ARM, or on Softcores if applicable
 - **test** Files for rtl simulation and hardware tests on target platform
