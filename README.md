@@ -9,7 +9,7 @@ You will need:
 - Quartus std or Lite for the FPGA design compilation (tested with 22.1)
 
 For the target hardware you need:
-- The DE10-Nano board itself (tested with revision C)
+- The DE10-Nano board itself (tested with Revision C)
 - 5V power cable
 - Micro SD card with at least 1GB
 - USB Mini-B cable for UART communication between Host PC and HPS
@@ -17,7 +17,7 @@ For the target hardware you need:
 
 ## Files and Folders
 
-- **build** Generated folder for the built artefacts e.g. bitstream files
+- **build** Generated folder for the built quartus artefacts e.g. rbf file
 - **doc** Documentation materials
 - **dts** DE10-Nano Device Tree files
 - **src** FPGA design sources
@@ -251,25 +251,23 @@ Copy over U-BOOT. Remember to change /dev/loopX the the right value.
 sudo dd if=./u-boot/u-boot-with-spl.sfp of=/dev/loopXp3 bs=64k seek=0 oflag=sync
 ```
 
-Copy Kernel and device tree
+Copy Kernel and device tree. There is a copy of the dtb file in the repo as well.
 
 ```
 # cd to de10 directory
 mkdir fat
 sudo mount /dev/loopXp1 fat
 sudo cp linux/arch/arm/boot/zImage fat
-# Use DE0 DTB for now as no DE10 DTB and they are basically the same board
-sudo cp linux/arch/arm/boot/dts/intel/socfpga/socfpga_cyclone5_de0_nano_soc.dtb fat
+sudo cp u-boot/arch/arm/dts/socfpga_cyclone5_de10_nano.dtb fat
 ```
 
 Generate extlinux file
-
 
 ```
 # cd to de10 directory
 echo "LABEL Linux Default" > extlinux.conf
 echo "    KERNEL ../zImage" >> extlinux.conf
-echo "    FDT ../socfpga_cyclone5_de0_nano_soc.dtb" >> extlinux.conf
+echo "    FDT ../socfpga_cyclone5_de10_nano.dtb" >> extlinux.conf
 echo "    APPEND root=/dev/mmcblk0p2 rw rootwait earlyprintk console=ttyS0,115200n8" >> extlinux.conf
 sudo mkdir -p fat/extlinux
 sudo cp extlinux.conf fat/extlinux
@@ -284,7 +282,7 @@ Copy root filesystem. If you need to make changes to it, now is a good time. You
 mkdir ext4
 sudo mount /dev/loopXp2 ext4
 cd ext4
-sudo tar -xf ../rootfs.tar.bz2
+sudo tar -xf ../rootfs.tar
 # Useful changes can include setting up eth0 in /etc/network/interfaces with
 # auto eth0
 # iface eth0 inet dhcp
@@ -321,7 +319,7 @@ Plug in the Mini-B USB cable into the J4 jack of the device. Use a serial device
 ```
 # The default should work in u-boot
 tio /dev/ttyUSB0
-# But sometimes you need a different baud rate
+# But sometimes you may need a different baud rate
 tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
 ```
 
@@ -340,7 +338,7 @@ If you set up Ethernet in /etc/network/interfaces on the SD card as mentioned ab
 
 For the following instructions be sure to have a working USB UART connection from your Host PC to the device.
 
-At this point it is possible to configure the FPGA from the OS. But first you may also want the FPGA design to be configured by default during the booting sequence as well. Also the FPGA to HPS bridges should be enabled by default if you intend to use them. To do so, after reseting the HPS, quickly interrupt the autoboot sequence by hitting return. In the u-boot console type:
+At this point it is possible to configure the FPGA from the OS. But first you may also want the FPGA design to be configured by default during the booting sequence as well. You should also enable the FPGA to HPS bridges by default if you intend to use them. To do so, after reseting the HPS, quickly interrupt the autoboot sequence by hitting return. In the u-boot console type:
 
 ```
 setenv load_fpga "load mmc 0:1 '\$loadaddr' fpga.rbf; dcache flush; fpga load 0 '\$loadaddr' '\$filesize'; bridge enable;"
