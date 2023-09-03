@@ -330,7 +330,7 @@ After powering up you should be able to see the displayed logs of the bootloader
 
 For the following instructions be sure to have a working USB UART connection from your Host PC to the device.
 
-At this point it is possible to configure the FPGA from the OS by executing the `fpga_config_tool`. But you may want the FPGA design to be configured by default during the booting sequence. Also the FPGA to HPS bridges must be enabled. To do so, after reseting the HPS, quickly interrupt the autoboot sequence by hitting return. In the u-boot console type:
+At this point it is possible to configure the FPGA from the OS by executing the `fpga_config_tool`. But you may also want the FPGA design to be configured by default during the booting sequence as well. Also the FPGA to HPS bridges must be enabled. To do so, after reseting the HPS, quickly interrupt the autoboot sequence by hitting return. In the u-boot console type:
 
 ```
 setenv load_fpga "load mmc 0:1 '\$loadaddr' fpga.rbf; dcache flush; fpga load 0 '\$loadaddr' '\$filesize'; bridge enable;"
