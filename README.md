@@ -52,7 +52,7 @@ Get the appropriate cross compiler with:
 sudo apt install gcc-arm-linux-gnueabi
 ```
 
-In `sw/fpga_config_tool` run `make` to build `fpga_rbf_load`. This will later be used to configure the FPGA from the OS.
+In `sw/fpga_config_tool` run `make` to build `fpga_config_tool`. This will later be used to configure the FPGA from the OS.
 
 Note: If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
@@ -326,6 +326,22 @@ tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
 
 After powering up you should be able to see the displayed logs of the bootloader and be able to log into Linux as root. If you set up Ethernet on the SD card as mentioned above, the eth0 link should come up after a few seconds. Run `ip a` to find out your IP address. If you haven't already, you can customize the OS to your needs, e.g. set up SSH.
 
+## Loading the FPGA design in u-boot
+
+For the following instructions be sure to have a working USB UART connection from your Host PC to the device.
+
+At this point it is possible to configure the FPGA from the OS by executing the `fpga_config_tool`. But you may want the FPGA design to be configured by default during the booting sequence. Also the FPGA to HPS bridges must be enabled. To do so, after reseting the HPS, quickly interrupt the autoboot sequence by hitting return. In the u-boot console type:
+
+```
+setenv load_fpga "load mmc 0:1 '\$loadaddr' fpga.rbf; dcache flush; fpga load 0 '\$loadaddr' '\$filesize'; bridge enable;"
+setenv bootcmd "run load_fpga; run distro_bootcmd"
+saveenv
+```
+
+You can now `run load_fpga` from the u-boot console to configure the FPGA design. From now on this command will also be run automatically during the booting sequence. Run `reset` to reboot or `run bootcmd` to boot into Linux.
+
+TODO Note: All of this can also be done during u-boot compilation.
+
 ## Ethernet communication
 
 Use SSH to communicate between the Host PC and the HPS via Ethernet. One of the main benefits is the seamless transfer of files like the rbf-file between Host PC and HPS. This way it is possible to flash a new rbf on the SD card within around three seconds, which is a huge benefit compared to the traditional flashing process which can take many minutes. Use the files in the `util` folder as a template for basic understanding on how SSH and SCP commands are utilized.
@@ -344,22 +360,3 @@ On Buildroot you can utilize the `devmem` command to access the entire physical 
 Refer to the [Cyclone V HPS Technical Reference Manual](https://www.intel.com/content/www/us/en/docs/programmable/683126/21-2/hard-processor-system-technical-reference.html). Refer to `src/soc.qsys` in Quartus for FPGA memory mapped slave base addresses.
 
 For a quick example on how to remotely access some FPGA status registers, run `util/ReadImageMetaInfo.sh`.
-
-
-## TODO Bootloader Das u-boot
-
-In u-boot load the `fpga.rbf` with:
-
-```
-load mmc 0:1 $loadaddr fpga.rbf; dcache flush; fpga load 0 $loadaddr $filesize; bridge enable;
-```
-
-setenv bootcmd "echo \$loadaddr; run distro_bootcmd"
-
-
-setenv bootcmd "echo '\$loadaddr'"
-
-
-setenv load_fpga "load mmc 0:1 '\$loadaddr' fpga.rbf; dcache flush; fpga load 0 '\$loadaddr' '\$filesize'; bridge enable;"
-setenv bootcmd "run load_fpga; run distro_bootcmd"
-saveenv
