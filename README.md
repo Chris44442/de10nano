@@ -268,7 +268,7 @@ Generate extlinux file
 echo "LABEL Linux Default" > extlinux.conf
 echo "    KERNEL ../zImage" >> extlinux.conf
 echo "    FDT ../socfpga_cyclone5_de10_nano.dtb" >> extlinux.conf
-echo "    APPEND root=/dev/mmcblk0p2 rw rootwait earlyprintk console=ttyS0,115200n8" >> extlinux.conf
+echo "    APPEND root=/dev/mmcblk0p2 rw rootwait earlyprintk console=ttyS0,230400n8" >> extlinux.conf
 sudo mkdir -p fat/extlinux
 sudo cp extlinux.conf fat/extlinux
 sudo umount fat
@@ -349,6 +349,27 @@ saveenv
 You can now `run load_fpga` from the u-boot console to configure the FPGA design. From now on this command will also be run automatically during the booting sequence. Run `reset` to reboot or `run bootcmd` to boot into Linux.
 
 TODO Note: All of this can also be done during u-boot compilation so that no further changes in u-boot are required.
+
+ Default Environment:
+    CONFIG_EXTRA_ENV_SETTINGS
+
+    Define this to contain any number of null terminated
+    strings (variable = value pairs) that will be part of
+    the default environment compiled into the boot image.
+
+    For example, place something like this in your
+    board's config file:
+
+    #define CONFIG_EXTRA_ENV_SETTINGS \
+        "myvar1=value1\0" \
+        "myvar2=value2\0"
+
+    Warning: This method is based on knowledge about the
+    internal format how the environment is stored by the
+    U-Boot code. This is NOT an official, exported
+    interface! Although it is unlikely that this format
+    will change soon, there is no guarantee either.
+    You better know what you are doing here.
 
 ## Ethernet communication
 
