@@ -321,6 +321,7 @@ Plug in the Mini-B USB cable into the J4 jack of the device. Use a serial device
 
 ```
 tio /dev/ttyUSB0
+# sometime you need a different baud rate:
 tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
 ```
 
