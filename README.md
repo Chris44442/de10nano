@@ -260,7 +260,7 @@ mkdir fat
 sudo mount /dev/loopXp1 fat
 sudo cp linux/arch/arm/boot/zImage fat
 # Use DE0 DTB for now as no DE10 DTB and they are basically the same board
-sudo cp linux/arch/arm/boot/dts/socfpga_cyclone5_de0_nano_soc.dtb fat
+sudo cp linux/arch/arm/boot/dts/intel/socfpga/socfpga_cyclone5_de0_nano_soc.dtb fat
 ```
 
 Generate extlinux file
@@ -288,16 +288,11 @@ cd ext4
 sudo tar -xf ../rootfs.tar.bz2
 # Useful changes can include setting up eth0 in /etc/network/interfaces with
 # auto eth0
-# iface eth0 inet static
-#   address 169.254.x.x # x being your choice
-#   netmask 255.255.0.0
-#   network 0.0.0.0
+# iface eth0 inet dhcp
 # And also setting up SSH in /etc/ssh/sshd_config: Enable root access, 
 # allow password authentication and empty password if you need.
 # Also add aliases like alias uh='ls -l --group-directories-first' in 
 # /etc/profile
-# For convenience place the previously built fpga_rbf_load file into 
-# /home/root/
 cd ..
 sudo umount ext4
 ```
@@ -337,7 +332,7 @@ Use SSH to communicate between the Host PC and the HPS via Ethernet. One of the 
 
 The other obvious advantage is the ability to easily connect to the device as long as the Host PC and the device are in the same network.
 
-Run `util/warm_flash_and_config.sh` on the Host PC in order to flash and configure the FPGA remotely. The previously built `fpga_rbf_load` file needs to be in the `/home/root` directory as mentioned above. You also need the to have the rbf-file in the `build` folder. Remember to keep the HPS IP configuration in the QSYS the same, or otherwise configuring such an rbf can fail, or even crash the HPS.
+Run `util/warm_flash_and_config.sh` on the Host PC in order to flash and configure the FPGA remotely. The previously built `fpga_rbf_load` file needs to be in the `/home/root` directory. You also need the to have the rbf-file in the `build` folder. Remember to keep the HPS IP configuration in the QSYS the same, or otherwise configuring such an rbf can fail, or even crash the HPS.
 
 One way to observe a successful FPGA reconfiguration is to consecutively configure two rbfs with different LEDs flashing.
 

@@ -1,4 +1,4 @@
-TARGET = fpga_rbf_load
+TARGET = fpga_config_tool
 
 SRCS=$(wildcard *.c functions/*.c)
 OBJECTS=$(SRCS:.c=.o)
