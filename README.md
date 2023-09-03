@@ -344,3 +344,22 @@ On Buildroot you can utilize the `devmem` command to access the entire physical 
 Refer to the [Cyclone V HPS Technical Reference Manual](https://www.intel.com/content/www/us/en/docs/programmable/683126/21-2/hard-processor-system-technical-reference.html). Refer to `src/soc.qsys` in Quartus for FPGA memory mapped slave base addresses.
 
 For a quick example on how to remotely access some FPGA status registers, run `util/ReadImageMetaInfo.sh`.
+
+
+## TODO Bootloader Das u-boot
+
+In u-boot load the `fpga.rbf` with:
+
+```
+load mmc 0:1 $loadaddr fpga.rbf; dcache flush; fpga load 0 $loadaddr $filesize; bridge enable;
+```
+
+setenv bootcmd "echo \$loadaddr; run distro_bootcmd"
+
+
+setenv bootcmd "echo '\$loadaddr'"
+
+
+setenv load_fpga "load mmc 0:1 '\$loadaddr' fpga.rbf; dcache flush; fpga load 0 '\$loadaddr' '\$filesize'; bridge enable;"
+setenv bootcmd "run load_fpga; run distro_bootcmd"
+saveenv
