@@ -320,8 +320,9 @@ Put the SD card into the DE10 nano, and it should boot up into Buildroot.
 Plug in the Mini-B USB cable into the J4 jack of the device. Use a serial device tool like **tio** to communicate between the Host PC and the HPS via USB UART. Change the baud rate if necessary. Before booting the HPS, on the Host PC run **tio**. Remember to change the values depending on which USB port of your Host PC you are using.
 
 ```
+# The default should work in u-boot
 tio /dev/ttyUSB0
-# sometime you need a different baud rate:
+# But sometimes you need a different baud rate
 tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
 ```
 
