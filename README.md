@@ -36,7 +36,7 @@ SOC_IP_DE10="169.254.42.42"
 
 Run the `build.sh` script to build the FPGA design. It will generate QSYS and IP files, synthezise, place and route the FPGA design and build the rbf-file.
 
-:bulb: If you're running Quartus Lite you might need to build via the GUI since script support is limited. It might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI. Be sure to choose passive parallel x16 and enable compression.
+Note: If you're running Quartus Lite you might need to build via the GUI since script support is limited. It might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI. Be sure to choose passive parallel x16 and enable compression.
 
 You can clean up generated files with `git clean -fdx`.
 
