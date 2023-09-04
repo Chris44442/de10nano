@@ -57,11 +57,7 @@ wire hps_fpga_reset_n;
 
 soc soc_0 (
   .clk_clk(FPGA_CLK1_50), //clk and reset
-  .hps_0_f2h_cold_reset_req_reset_n(1),
-  .hps_0_f2h_debug_reset_req_reset_n(1),
-  .hps_0_f2h_stm_hw_events_stm_hwevents(),
-  .hps_0_f2h_warm_reset_req_reset_n(1),
-  .hps_0_h2f_reset_reset_n(hps_fpga_reset_n),
+  .h2f_reset_reset_n(hps_fpga_reset_n),
   .reset_reset_n(hps_fpga_reset_n),
   .memory_mem_a(HPS_DDR3_ADDR), //HPS ddr3
   .memory_mem_ba(HPS_DDR3_BA),
@@ -79,61 +75,61 @@ soc soc_0 (
   .memory_mem_odt(HPS_DDR3_ODT),
   .memory_mem_dm(HPS_DDR3_DM),
   .memory_oct_rzqin(HPS_DDR3_RZQ),
-  .hps_0_hps_io_hps_io_emac1_inst_TX_CLK(HPS_ENET_GTX_CLK), //HPS ethernet
-  .hps_0_hps_io_hps_io_emac1_inst_TXD0(HPS_ENET_TX_DATA[0]),
-  .hps_0_hps_io_hps_io_emac1_inst_TXD1(HPS_ENET_TX_DATA[1]),
-  .hps_0_hps_io_hps_io_emac1_inst_TXD2(HPS_ENET_TX_DATA[2]),
-  .hps_0_hps_io_hps_io_emac1_inst_TXD3(HPS_ENET_TX_DATA[3]),
-  .hps_0_hps_io_hps_io_emac1_inst_RXD0(HPS_ENET_RX_DATA[0]),
-  .hps_0_hps_io_hps_io_emac1_inst_RXD1(HPS_ENET_RX_DATA[1]),
-  .hps_0_hps_io_hps_io_emac1_inst_RXD2(HPS_ENET_RX_DATA[2]),
-  .hps_0_hps_io_hps_io_emac1_inst_RXD3(HPS_ENET_RX_DATA[3]),
-  .hps_0_hps_io_hps_io_emac1_inst_MDIO(HPS_ENET_MDIO),
-  .hps_0_hps_io_hps_io_emac1_inst_MDC(HPS_ENET_MDC),
-  .hps_0_hps_io_hps_io_emac1_inst_RX_CTL(HPS_ENET_RX_DV),
-  .hps_0_hps_io_hps_io_emac1_inst_TX_CTL(HPS_ENET_TX_EN),
-  .hps_0_hps_io_hps_io_emac1_inst_RX_CLK(HPS_ENET_RX_CLK),
-  .hps_0_hps_io_hps_io_sdio_inst_CMD(HPS_SD_CMD), //HPS SD card
-  .hps_0_hps_io_hps_io_sdio_inst_D0(HPS_SD_DATA[0]),
-  .hps_0_hps_io_hps_io_sdio_inst_D1(HPS_SD_DATA[1]),
-  .hps_0_hps_io_hps_io_sdio_inst_CLK(HPS_SD_CLK),
-  .hps_0_hps_io_hps_io_sdio_inst_D2(HPS_SD_DATA[2]),
-  .hps_0_hps_io_hps_io_sdio_inst_D3(HPS_SD_DATA[3]),
-  .hps_0_hps_io_hps_io_usb1_inst_D0(HPS_USB_DATA[0]), //HPS USB
-  .hps_0_hps_io_hps_io_usb1_inst_D1(HPS_USB_DATA[1]),
-  .hps_0_hps_io_hps_io_usb1_inst_D2(HPS_USB_DATA[2]),
-  .hps_0_hps_io_hps_io_usb1_inst_D3(HPS_USB_DATA[3]),
-  .hps_0_hps_io_hps_io_usb1_inst_D4(HPS_USB_DATA[4]),
-  .hps_0_hps_io_hps_io_usb1_inst_D5(HPS_USB_DATA[5]),
-  .hps_0_hps_io_hps_io_usb1_inst_D6(HPS_USB_DATA[6]),
-  .hps_0_hps_io_hps_io_usb1_inst_D7(HPS_USB_DATA[7]),
-  .hps_0_hps_io_hps_io_usb1_inst_CLK(HPS_USB_CLKOUT),
-  .hps_0_hps_io_hps_io_usb1_inst_STP(HPS_USB_STP),
-  .hps_0_hps_io_hps_io_usb1_inst_DIR(HPS_USB_DIR),
-  .hps_0_hps_io_hps_io_usb1_inst_NXT(HPS_USB_NXT),
-  .hps_0_hps_io_hps_io_spim1_inst_CLK(HPS_SPIM_CLK), //HPS SPI
-  .hps_0_hps_io_hps_io_spim1_inst_MOSI(HPS_SPIM_MOSI),
-  .hps_0_hps_io_hps_io_spim1_inst_MISO(HPS_SPIM_MISO),
-  .hps_0_hps_io_hps_io_spim1_inst_SS0(HPS_SPIM_SS),
-  .hps_0_hps_io_hps_io_uart0_inst_RX(HPS_UART_RX), //HPS UART
-  .hps_0_hps_io_hps_io_uart0_inst_TX(HPS_UART_TX),
-  .hps_0_hps_io_hps_io_i2c0_inst_SDA(HPS_I2C0_SDAT), //HPS I2C
-  .hps_0_hps_io_hps_io_i2c0_inst_SCL(HPS_I2C0_SCLK),
-  .hps_0_hps_io_hps_io_i2c1_inst_SDA(HPS_I2C1_SDAT),
-  .hps_0_hps_io_hps_io_i2c1_inst_SCL(HPS_I2C1_SCLK),
-  .hps_0_hps_io_hps_io_gpio_inst_GPIO09(HPS_CONV_USB_N), //GPIO
-  .hps_0_hps_io_hps_io_gpio_inst_GPIO35(HPS_ENET_INT_N),
-  .hps_0_hps_io_hps_io_gpio_inst_GPIO40(HPS_LTC_GPIO),
-  .hps_0_hps_io_hps_io_gpio_inst_GPIO53(HPS_LED),
-  .hps_0_hps_io_hps_io_gpio_inst_GPIO54(HPS_KEY),
-  .hps_0_hps_io_hps_io_gpio_inst_GPIO61(HPS_GSENSOR_INT)
+  .hps_io_hps_io_emac1_inst_TX_CLK(HPS_ENET_GTX_CLK), //HPS ethernet
+  .hps_io_hps_io_emac1_inst_TXD0(HPS_ENET_TX_DATA[0]),
+  .hps_io_hps_io_emac1_inst_TXD1(HPS_ENET_TX_DATA[1]),
+  .hps_io_hps_io_emac1_inst_TXD2(HPS_ENET_TX_DATA[2]),
+  .hps_io_hps_io_emac1_inst_TXD3(HPS_ENET_TX_DATA[3]),
+  .hps_io_hps_io_emac1_inst_RXD0(HPS_ENET_RX_DATA[0]),
+  .hps_io_hps_io_emac1_inst_RXD1(HPS_ENET_RX_DATA[1]),
+  .hps_io_hps_io_emac1_inst_RXD2(HPS_ENET_RX_DATA[2]),
+  .hps_io_hps_io_emac1_inst_RXD3(HPS_ENET_RX_DATA[3]),
+  .hps_io_hps_io_emac1_inst_MDIO(HPS_ENET_MDIO),
+  .hps_io_hps_io_emac1_inst_MDC(HPS_ENET_MDC),
+  .hps_io_hps_io_emac1_inst_RX_CTL(HPS_ENET_RX_DV),
+  .hps_io_hps_io_emac1_inst_TX_CTL(HPS_ENET_TX_EN),
+  .hps_io_hps_io_emac1_inst_RX_CLK(HPS_ENET_RX_CLK),
+  .hps_io_hps_io_sdio_inst_CMD(HPS_SD_CMD), //HPS SD card
+  .hps_io_hps_io_sdio_inst_D0(HPS_SD_DATA[0]),
+  .hps_io_hps_io_sdio_inst_D1(HPS_SD_DATA[1]),
+  .hps_io_hps_io_sdio_inst_CLK(HPS_SD_CLK),
+  .hps_io_hps_io_sdio_inst_D2(HPS_SD_DATA[2]),
+  .hps_io_hps_io_sdio_inst_D3(HPS_SD_DATA[3]),
+  .hps_io_hps_io_usb1_inst_D0(HPS_USB_DATA[0]), //HPS USB
+  .hps_io_hps_io_usb1_inst_D1(HPS_USB_DATA[1]),
+  .hps_io_hps_io_usb1_inst_D2(HPS_USB_DATA[2]),
+  .hps_io_hps_io_usb1_inst_D3(HPS_USB_DATA[3]),
+  .hps_io_hps_io_usb1_inst_D4(HPS_USB_DATA[4]),
+  .hps_io_hps_io_usb1_inst_D5(HPS_USB_DATA[5]),
+  .hps_io_hps_io_usb1_inst_D6(HPS_USB_DATA[6]),
+  .hps_io_hps_io_usb1_inst_D7(HPS_USB_DATA[7]),
+  .hps_io_hps_io_usb1_inst_CLK(HPS_USB_CLKOUT),
+  .hps_io_hps_io_usb1_inst_STP(HPS_USB_STP),
+  .hps_io_hps_io_usb1_inst_DIR(HPS_USB_DIR),
+  .hps_io_hps_io_usb1_inst_NXT(HPS_USB_NXT),
+  .hps_io_hps_io_spim1_inst_CLK(HPS_SPIM_CLK), //HPS SPI
+  .hps_io_hps_io_spim1_inst_MOSI(HPS_SPIM_MOSI),
+  .hps_io_hps_io_spim1_inst_MISO(HPS_SPIM_MISO),
+  .hps_io_hps_io_spim1_inst_SS0(HPS_SPIM_SS),
+  .hps_io_hps_io_uart0_inst_RX(HPS_UART_RX), //HPS UART
+  .hps_io_hps_io_uart0_inst_TX(HPS_UART_TX),
+  .hps_io_hps_io_i2c0_inst_SDA(HPS_I2C0_SDAT), //HPS I2C
+  .hps_io_hps_io_i2c0_inst_SCL(HPS_I2C0_SCLK),
+  .hps_io_hps_io_i2c1_inst_SDA(HPS_I2C1_SDAT),
+  .hps_io_hps_io_i2c1_inst_SCL(HPS_I2C1_SCLK),
+  .hps_io_hps_io_gpio_inst_GPIO09(HPS_CONV_USB_N), //GPIO
+  .hps_io_hps_io_gpio_inst_GPIO35(HPS_ENET_INT_N),
+  .hps_io_hps_io_gpio_inst_GPIO40(HPS_LTC_GPIO),
+  .hps_io_hps_io_gpio_inst_GPIO53(HPS_LED),
+  .hps_io_hps_io_gpio_inst_GPIO54(HPS_KEY),
+  .hps_io_hps_io_gpio_inst_GPIO61(HPS_GSENSOR_INT)
 );
 
-reg [27: 0] cnt;
+reg [23: 0] cnt;
 always @(posedge FPGA_CLK1_50) begin
   cnt <= cnt + 1;
 end
 
-assign LED[7:0] = cnt[27:20];
+assign LED[7:6] = cnt[23:22];
 
 endmodule
