@@ -1,12 +1,12 @@
 # DE10-Nano Cyclone V SoC example design for rapid prototyping
 
-FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS FPGA Manager, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. This time, mainly due to its popularity and amiable pricetag, the target of choice is the Terasic DE10-Nano Cyclone V SoC board Revision C. This repo provides the necessary sources and tools to build a system on which you can rapidly prototype and test new FPGA designs.
+FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS FPGA Manager, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. This time, mainly due to its popularity and amiable pricetag, the target of choice is the Terasic DE10-Nano Cyclone V SoC board Revision C. This repository provides the necessary sources and tools to build a system on which you can rapidly prototype and test new FPGA designs.
 
 ## Dependencies
 
 You will need:
-- Host PC with any Linux distro that can run Quartus (tested with Ubuntu 22.04)
-- Quartus std or Lite for the FPGA design compilation (tested with 22.1)
+- Host PC with your favourite Linux distro that can run Quartus (tested with Ubuntu 22.04)
+- Quartus Standard or Lite for the FPGA design compilation (tested with 22.1 Lite)
 
 For the target hardware you need:
 - The DE10-Nano board itself (tested with Revision C)
@@ -17,16 +17,15 @@ For the target hardware you need:
 
 ## Files and Folders
 
-- **build** Generated folder for the built quartus artefacts e.g. rbf file
-- **doc** Documentation materials
+- **build** Generated folder for the built Quartus artefacts, e.g. rbf file
+- **doc** Documentation
 - **dts** DE10-Nano Device Tree files
 - **src** FPGA design sources
-- **sw** Software that can be run on the ARM, or on Softcores if applicable
-- **test** Files for rtl simulation and hardware tests on target platform
-- **util** Utilities and hardware scripts, e.g. for flashing and configuring the FPGA
+- **sw** Software that can be run on the HPS, or on soft processors if applicable
+- **util** Utilities and scripts, e.g. for flashing and configuring the FPGA
 - **build.sh** Bash script to build the FPGA design via Quartus
 
-## Build the FPGA Design and the HPS
+## Build the FPGA Design
 
 Clone or download this repository. The build and util scripts rely on you having the config file `.fpga_config_de10` present in your `~` home directory. It must contain the following (replace with your values):
 
