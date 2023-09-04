@@ -36,7 +36,7 @@ SOC_IP_DE10="169.254.42.42"
 
 Run the `build.sh` script to build the FPGA design. It will generate QSYS and IP files, synthezise, place and route the FPGA design and build the rbf-file.
 
-Note: If you're running Quartus Lite you might need to build via the GUI since script support is limited. It might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI, set the options to passive parallel x16 and enable compression.
+:bulb: If you're running Quartus Lite you might need to build via the GUI since script support is limited. It might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI. Be sure to choose passive parallel x16 and enable compression.
 
 You can clean up generated files with `git clean -fdx`.
 
@@ -56,7 +56,7 @@ In `sw/fpga_config_tool` run `make` to build `fpga_config_tool`. This will later
 
 Note: If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
-## Build Buildroot
+## Build U-Boot, Linux Kernel and Buildroot
 
 Understanding how to create a Linux bootable SD card for the HPS from scratch can be quite daunting, especially for beginners. This chapter was heavily inspired by other guides such as [[1]](https://wiki.trenz-electronic.de/pages/viewpage.action?pageId=94485703), [[2]](https://www.gibbard.me/linux_debian_de10/) and [[3]](https://www.rocketboards.org/foswiki/Documentation/BuildingBootloaderCycloneVAndArria10). The goal of this chapter is to make creating the SD card as straightforward and simple as possible.
 
@@ -372,7 +372,7 @@ TODO Note: All of this can also be done during u-boot compilation so that no fur
 
 ## Ethernet communication
 
-Use SSH to communicate between the Host PC and the HPS via Ethernet. One of the main benefits is the seamless transfer of files like the rbf-file between Host PC and HPS. This way it is possible to flash a new rbf on the SD card within around three seconds, which is a huge benefit compared to the traditional flashing process which can take many minutes. Use the files in the `util` folder as a template for basic understanding on how SSH and SCP commands are utilized.
+Use SSH to communicate between the Host PC and the HPS via Ethernet. One of the main benefits is the seamless transfer of files like the rbf-file between Host PC and HPS. This way it is possible to flash a new rbf on the SD card within around three seconds, which is a huge benefit compared to the traditional flashing process for FPGAs which can take many minutes. Use the files in the `util` folder as a template for basic understanding on how SSH and SCP commands are utilized in this context.
 
 The other obvious advantage is the ability to easily connect to the device as long as the Host PC and the device are in the same network.
 
