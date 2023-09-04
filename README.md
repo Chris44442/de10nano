@@ -42,7 +42,7 @@ You can clean up generated files with `git clean -fdx`.
 
 ## Build the FPGA Config Tool
 
-On a SoC the u-boot or OS can access the FPGA Manager in order to configure the FPGA. The FPGA Config Tool runs on any embedded Linux like Angstrom or Buildroot.
+The u-boot or OS can configure the FPGA via the FPGA Manager. To access it use the **FPGA Config Tool** which runs on any embedded Linux.
 
 This tool was developed by [Nicolás Hasbún](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. It is fully implemented in C using direct register access to configure the FPGA via HPS FPGA Manager. Partial reconfiguration might be worth studying in the future.
 
@@ -293,7 +293,7 @@ cd ..
 sudo umount ext4
 ```
 
-Remove loopback
+Remove loopback.
 
 ```
 sudo losetup -d /dev/loopX
@@ -309,7 +309,7 @@ sudo dd if=de10_nano_sd.img of=/dev/sdX bs=64K status=progress
 sync
 ```
 
-Put the SD card into the DE10 nano, and it should boot up into Buildroot.
+Put the SD card into the DE10-Nano and it should boot up into Buildroot.
 
 ## USB UART communication
 
