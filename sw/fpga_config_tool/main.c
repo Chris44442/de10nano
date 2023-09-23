@@ -1,11 +1,33 @@
-#include "main.h"
+#include <stdio.h>    // printf
+#include <stdint.h>   // uint8_t
+#include <stdlib.h>   // malloc
+#include <stdbool.h>  // true false
+#include <unistd.h>   // sleep
+#include <string.h>   // string
+#include <fcntl.h>    // open
+#include <sys/mman.h> // mmap
 
-#define FPGA_MANAGER_ADD (0xff706000) // FPGA MANAGER MAIN REGISTER ADDRESS
-#define STAT_OFFSET      (0x000)
+// Useful macros
+#define BIT(x,n) (((x) >> (n)) & 1)
+#define INSERT_BITS(original, mask, value, num) (original & (~mask)) | (value << num)
+
+void config_routine();
+void report_status();
+uint8_t fpga_state();
+void set_cdratio();
+void reset_fpga();
+void config_fpga();
+void set_axicfgen(uint8_t value);
+void set_ctrl_en(uint8_t value);
+void set_nconfigpull(uint8_t value);
+void fpga_off();
+void fpga_on();
+char * status_code(uint8_t code);
+
+#define FPGA_MANAGER_ADD      (0xff706000) // FPGA MANAGER MAIN REGISTER ADDRESS
+#define FPGA_MANAGER_DATA_ADD (0xffb90000) // FPGA MANAGER DATA REGISTER ADDRESS
 #define CTRL_OFFSET      (0x004)
 #define GPIO_INTSTATUS   (0x840)
-
-#define FPGA_MANAGER_DATA_ADD (0xffb90000) // FPGA MANAGER DATA REGISTER ADDRESS
 
 int fd; // file descriptor for memory access
 void * virtualbase; // puntero genérico con map de userspace a hw
@@ -50,14 +72,14 @@ void report_status()
 // Status reg report MSEL (RO) config and FPGA current state (RW).
 // Also report cfgwdth, cdratio registers and other useful registers.
 {
-  uint8_t status = alt_read_byte(virtualbase + STAT_OFFSET);
+  uint8_t status = *(volatile uint8_t *) (virtualbase);
   uint8_t mode_mask = 0b111;
   uint8_t msel_mask = 0b11111 << 3;
 
   uint8_t mode = status & mode_mask;
   uint8_t msel = (status & msel_mask) >> 3;
 
-  uint16_t control_reg = alt_read_hword(virtualbase + CTRL_OFFSET);
+  uint16_t control_reg = *(volatile uint16_t *) (virtualbase + CTRL_OFFSET);
   uint16_t cfgwdth_mask = (0b1 << 9);
   uint16_t cdratio_mask = (0b11 << 6);
 
@@ -67,8 +89,7 @@ void report_status()
   uint8_t ctrl_en  = BIT(control_reg, 0);
   uint8_t nconfigpull = BIT(control_reg, 2);
 
-
-  uint16_t gpio_intstatus_reg  = alt_read_hword(virtualbase + GPIO_INTSTATUS);
+  uint16_t gpio_intstatus_reg  = *(volatile uint16_t *) (virtualbase + GPIO_INTSTATUS);
   uint8_t cd  = BIT(gpio_intstatus_reg, 1); // configuration done register
 
   printf("%s\n",      "******************************************************");
@@ -85,7 +106,7 @@ void report_status()
 
 uint8_t fpga_state()
 {
-  uint8_t status = alt_read_byte(virtualbase + STAT_OFFSET);
+  uint8_t status = *(volatile uint8_t *) (virtualbase);
   uint8_t mode_mask = 0b111;
   uint8_t mode = status & mode_mask;
 
@@ -96,24 +117,23 @@ void set_cdratio()
 // This should match your MSEL Pin configuration.
 // This is a config for MSEL[4..0] = 01010
 {
-  uint16_t control_reg  = alt_read_hword(virtualbase + CTRL_OFFSET);
+  uint16_t control_reg  = *(volatile uint16_t *) (virtualbase + CTRL_OFFSET);
   uint16_t cdratio_mask = (0b11 << 6);
   uint8_t  cdratio      = 0x3;
 
   control_reg = INSERT_BITS(control_reg, cdratio_mask, cdratio, 6);
-  alt_write_hword(virtualbase + CTRL_OFFSET, control_reg);
+  *(volatile uint16_t *) (virtualbase + CTRL_OFFSET) = control_reg;
 
   printf("%s 0x%x.\n", "Setting cdratio with", cdratio);
 }
 
-void reset_fpga()
-{
-  uint8_t status = alt_read_byte(virtualbase + STAT_OFFSET);
+void reset_fpga() {
+  uint8_t status = *(volatile uint8_t *) (virtualbase);
   uint8_t mode_mask = 0b111;
 
   status = INSERT_BITS(status, mode_mask, 0x1, 0);
 
-  alt_write_byte(virtualbase + STAT_OFFSET, status);
+  *(volatile uint8_t *)(virtualbase) = status;
 
   printf("%s.\n", "Resetting FPGA");
 }
@@ -157,7 +177,7 @@ void config_fpga()
     format_data = format_data | *(data_buffer + 2) << 16;
     format_data = format_data | *(data_buffer + 3) << 24;
 
-    alt_write_word(data_mmap, format_data);
+    *(volatile uint32_t *)(data_mmap) = format_data;
     memset(data_buffer, 0, 4); // reset data to 0.
   }
 
@@ -166,35 +186,35 @@ void config_fpga()
 
 void set_axicfgen(uint8_t value)
 {
-  uint16_t control_reg  = alt_read_hword(virtualbase + CTRL_OFFSET);
+  uint16_t control_reg  = *(volatile uint16_t *)(virtualbase + CTRL_OFFSET);
   uint16_t axicfgen_mask = 1 << 8;
   uint8_t axicfgen = value & 1; // binary values
 
   control_reg = INSERT_BITS(control_reg, axicfgen_mask, axicfgen, 8);
 
-  alt_write_hword(virtualbase + CTRL_OFFSET, control_reg);
+  *(volatile uint32_t *)(virtualbase + CTRL_OFFSET) = control_reg;
 }
 
 void set_ctrl_en(uint8_t value)
 {
-  uint16_t control_reg  = alt_read_hword(virtualbase + CTRL_OFFSET);
+  uint16_t control_reg  = *(volatile uint16_t *)(virtualbase + CTRL_OFFSET);
   uint16_t ctrl_en_mask = 1 << 0;
   uint8_t  ctrl_en = value & 1; // binary values
 
   control_reg = INSERT_BITS(control_reg, ctrl_en_mask, ctrl_en, 0);
 
-  alt_write_hword(virtualbase + CTRL_OFFSET, control_reg);
+  *(volatile uint16_t *)(virtualbase + CTRL_OFFSET) = control_reg;
 }
 
 void set_nconfigpull(uint8_t value)
 {
-  uint16_t control_reg  = alt_read_hword(virtualbase + CTRL_OFFSET);
+  uint16_t control_reg  = *(volatile uint16_t *)(virtualbase + CTRL_OFFSET);
   uint16_t nconfigpull_mask = 1 << 2;
   uint8_t  nconfigpull = value & 1; // binary values
 
   control_reg = INSERT_BITS(control_reg, nconfigpull_mask, nconfigpull, 2);
 
-  alt_write_hword(virtualbase + CTRL_OFFSET, control_reg);
+  *(volatile uint16_t *)(virtualbase + CTRL_OFFSET) = control_reg;
 }
 
 void fpga_off()
