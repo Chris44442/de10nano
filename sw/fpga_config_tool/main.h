@@ -7,11 +7,14 @@
 #include <fcntl.h>    // open
 #include <sys/mman.h> // mmap
 
-// The Altera SoC Abstraction Layer (SoCAL) API Reference Manual
-#include "socal.h"
-#include "hps.h"
-
 // Useful macros
+#define ALT_CAST(type, ptr)  ((type) (ptr))
+#define alt_write_byte(dest, src)  (*ALT_CAST(volatile uint8_t *, (dest)) = (src))
+#define alt_read_byte(src)         (*ALT_CAST(volatile uint8_t *, (src)))
+#define alt_write_hword(dest, src) (*ALT_CAST(volatile uint16_t *, (dest)) = (src))
+#define alt_read_hword(src)        (*ALT_CAST(volatile uint16_t *, (src)))
+#define alt_write_word(dest, src)  (*ALT_CAST(volatile uint32_t *, (dest)) = (src))
+#define alt_read_word(src)         (*ALT_CAST(volatile uint32_t *, (src)))
 #define BIT(x,n) (((x) >> (n)) & 1)
 #define INSERT_BITS(original, mask, value, num) (original & (~mask)) | (value << num)
 
