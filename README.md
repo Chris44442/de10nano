@@ -147,38 +147,52 @@ make savedefconfig
 mv defconfig arch/arm/configs/socfpga_de10_defconfig
 ```
 
-### Make a Buildroot root filesystem
+### Make a Buildroot root file system
 
-This guide leads through the rootfile system generation.
+This guide leads through the root file system generation. Clone and configure Buildroot:
 
-- Create a new folder in a known existing folder via mkdir rootfs
-- Change into the new folder via cd rootfs
-- Clone the git repository via git clone https://github.com/buildroot/buildroot
-- Change into the new folder via cd buildroot
-- Look into the branch overview inside the repository via git branch -a
-- Select one of the branches and check it out via git checkout <selection>
-- Open the buildroot configuration dialogue via make nconfig
-- Configure the buildroot in this window:
-  - Target options → Target Architecture → ARM (little endian)
-  - Target options → Target Architecture Variant → cortex-A9
-  - Target options → Target ABI → EABI
-  - Target options → Enable NEON SIMD extension support
-  - Target options → Floating point strategy → NEON
-  - Toolchain → Toolchain type → Buildroot toolchain
-  - System Configuration → System hostname → <Select a name>
-  - System Configuration → System banner → <Select a system banner>
-  - System Configuration → Init System → BusyBox
-  - System Configuration → /dev management → Dynamic using devtmpfs only
-  - System Configuration → Enable root login with password
-  - System Configuration → Root password → root
-  - System Configuration →Enable Run a getty (login prompt) after boot
-  - Filesystem images → Enable tar the root filesystem
-  - Remember to also install desired compents such as nano, openssh, compilers, etc.
+```
+mkdir rootfs
+cd rootfs
+git clone https://github.com/buildroot/buildroot
+cd buildroot
+git branch -a
+git checkout <the branch you want>
+make nconfig
+```
+
+Configure the buildroot in this window:
+- Target options → Target Architecture → ARM (little endian)
+- Target options → Target Architecture Variant → cortex-A9
+- Target options → Target ABI → EABI
+- Target options → Enable NEON SIMD extension support
+- Target options → Floating point strategy → NEON
+- Toolchain → Toolchain type → Buildroot toolchain
+- System Configuration → System hostname → <Select a name>
+- System Configuration → System banner → <Select a system banner>
+- System Configuration → Init System → BusyBox
+- System Configuration → /dev management → Dynamic using devtmpfs only
+- System Configuration → Enable root login with password
+- System Configuration → Root password → root
+- System Configuration →Enable Run a getty (login prompt) after boot
+- Filesystem images → Enable tar the root filesystem
+- Remember to also install desired compents such as nano, openssh, compilers, etc.
 - Save the configuration via F6 → Enter → Enter
 - Exit the configuration menu via F9
-- Configure BusyBox if desired via make busybox-menuconfig
-- Generate the root filesystem via make all
-- After compilation, which can can last a longer time, the root filesystem (rootfs.tar) should be in folder buildroot/output/images/
+
+Configure BusyBox, e.g. to enable ethernet:
+
+```
+make busybox-menuconfig
+```
+
+Generate the root filesystem:
+
+```
+make all
+```
+
+After compilation the root filesystem (rootfs.tar) is in folder buildroot/output/images/
 
 ### Create the SD card image
 
