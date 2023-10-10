@@ -1,6 +1,6 @@
 # DE10-Nano reference design
 
-This repo includes guides to build basic FPGA bitstream, ARM bootloader, and Linux, all from source, for the Terasic DE10-Nano.
+This repo includes guides to build from source the FPGA bitstream, U-boot, and Linux for the Terasic DE10-Nano.
 
 ## Dependencies
 
@@ -74,11 +74,11 @@ cd toolchain
 wget https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--glibc--stable-2020.08-1.tar.bz2
 tar -xf armv7-eabihf--glibc--stable-2020.08-1.tar.bz2
 rm armv7-eabihf--glibc--stable-2020.08-1.tar.bz2
-# The CROSS_COMPILE variable must be set in any terminal used to build u-boot or the kernel
+# The CROSS_COMPILE variable must be set in any terminal used to build U-boot or the kernel
 export CROSS_COMPILE=$PWD/armv7-eabihf--glibc--stable-2020.08-1/bin/arm-linux-
 ```
 
-### Build the u-boot bootloader
+### Build the U-boot bootloader
 
 Make sure CROSS_COMPILE variable is still set in the environment.
 
@@ -314,13 +314,13 @@ Put the SD card into the DE10-Nano and it should boot up into Buildroot.
 Plug in the Mini-B USB cable into the J4 jack of the device. Use a serial device tool like **tio** to communicate between the Host PC and the HPS via USB UART. Change the baud rate if necessary. Before booting the HPS, on the Host PC run **tio**. Remember to change the values depending on which USB port of your Host PC you are using.
 
 ```
-# The default should work in u-boot
+# The default should work in U-boot
 tio /dev/ttyUSB0
 # But sometimes you may need a different baud rate
 tio -b 57600 -d 8 -f none -s 1 -p none /dev/ttyUSB0
 ```
 
-After powering up you should be able to see the displayed logs of the bootloader. Some versions of u-boot require you to set the bootcmd variable which enables you to automatically boot into Linux. In some other versions this step is not necessary. In the u-boot console type:
+After powering up you should be able to see the displayed logs of the bootloader. Some versions of U-boot require you to set the bootcmd variable which enables you to automatically boot into Linux. In some other versions this step is not necessary. In the U-boot console type:
 
 ```
 setenv bootcmd "run distro_bootcmd"
@@ -331,11 +331,11 @@ Type `run bootcmd` to boot into Linux.
 
 If you set up Ethernet in /etc/network/interfaces on the SD card as mentioned above, the eth0 link should come up after a few seconds. Run `ip a` to find out your IP address. If you haven't already, you can now customize the OS to your needs, e.g. set up SSH.
 
-## Loading the FPGA design in u-boot
+## Loading the FPGA design in U-boot
 
 For the following instructions be sure to have a working USB UART connection from your Host PC to the device.
 
-At this point it is possible to configure the FPGA from the OS. But first you may also want the FPGA design to be configured by default during the booting sequence as well. You should also enable the FPGA to HPS bridges by default if you intend to use them. To do so, after reseting the HPS, quickly interrupt the autoboot sequence by hitting return. In the u-boot console type:
+At this point it is possible to configure the FPGA from the OS. But first you may also want the FPGA design to be configured by default during the booting sequence as well. You should also enable the FPGA to HPS bridges by default if you intend to use them. To do so, after reseting the HPS, quickly interrupt the autoboot sequence by hitting return. In the U-boot console type:
 
 ```
 setenv load_fpga "load mmc 0:1 '\$loadaddr' fpga.rbf; dcache flush; fpga load 0 '\$loadaddr' '\$filesize'; bridge enable;"
@@ -343,9 +343,9 @@ setenv bootcmd "run load_fpga; run distro_bootcmd"
 saveenv
 ```
 
-You can now `run load_fpga` from the u-boot console to configure the FPGA design. From now on this command will also be run automatically during the booting sequence. Run `reset` to reboot or `run bootcmd` to boot into Linux.
+You can now `run load_fpga` from the U-boot console to configure the FPGA design. From now on this command will also be run automatically during the booting sequence. Run `reset` to reboot or `run bootcmd` to boot into Linux.
 
-TODO Note: All of this can also be done during u-boot compilation so that no further changes in u-boot are required.
+TODO Note: All of this can also be done during U-boot compilation so that no further changes in U-boot are required.
 
  Default Environment:
     CONFIG_EXTRA_ENV_SETTINGS
@@ -382,13 +382,13 @@ Another way is to read and write on FPGA Memory Mapped Registers before reconfig
 
 ## Build the FPGA Config Tool
 
-The u-boot or OS can configure the FPGA via the FPGA Manager. To access it use the **FPGA Config Tool** which runs on any embedded Linux. Get the appropriate cross compiler with:
+The U-boot or OS can configure the FPGA via the FPGA Manager. To access it use the **FPGA Config Tool** which runs on any embedded Linux. Get the appropriate cross compiler with:
 
 ```
 sudo apt install gcc-arm-linux-gnueabi
 ```
 
-In `sw/fpga_config_tool` run `make` to build `fpga_config_tool`. This will later be used to configure the FPGA from the OS.
+In `sw/fpga_config_tool` run `make` to build `fpga_config_tool`. Use it to configure the FPGA from the OS.
 
 Note: If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
@@ -397,4 +397,4 @@ Note: If you want to use this tool on other boards, you might need to change the
 On Buildroot you can utilize the `devmem` command to access the entire physical address space, including the FPGA Slaves (AXI), the FPGA Lightweight (AXI Lite), the common SDRAM and more.
 Refer to the [Cyclone V HPS Technical Reference Manual](https://www.intel.com/content/www/us/en/docs/programmable/683126/21-2/hard-processor-system-technical-reference.html). Refer to `src/soc.qsys` in Quartus for FPGA memory mapped slave base addresses.
 
-For a quick example on how to remotely access some FPGA status registers, run `util/ReadImageMetaInfo.sh`.
+For a quick example on how to remotely access some FPGA status registers, run `util/read_qsys_sysid.sh`.
