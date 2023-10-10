@@ -1,5 +1,5 @@
 [package]
-name = "memtool2"
+name = "memtool3"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 memmap = "0.7.0"
-volatile = "0.3"
+regmap = { path = "../regmap"} # FPGA register map address module

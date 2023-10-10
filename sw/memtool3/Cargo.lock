@@ -19,18 +19,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "memtool2"
+name = "memtool3"
 version = "0.1.0"
 dependencies = [
  "memmap",
- "volatile",
+ "regmap",
 ]
 
 [[package]]
-name = "volatile"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8e76fae08f03f96e166d2dfda232190638c10e0383841252416f9cfe2ae60e6"
+name = "regmap"
+version = "0.1.0"
 
 [[package]]
 name = "winapi"
