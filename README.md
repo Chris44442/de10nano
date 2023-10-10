@@ -1,6 +1,6 @@
 # DE10-Nano reference design
 
-This repo includes guides to build from source the FPGA bitstream, U-boot, and Linux for the Terasic DE10-Nano.
+This repo includes guides to build from source basic FPGA bitstream, U-boot, and Linux for the Terasic DE10-Nano.
 
 ## Dependencies
 
