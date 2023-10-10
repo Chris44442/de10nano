@@ -10,3 +10,4 @@ src/.qsys_edit
 sw/fpga_config_tool/main.o
 sw/fpga_config_tool/fpga_config_tool
 src/soc
+sw/**/target

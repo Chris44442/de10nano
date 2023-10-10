@@ -1,6 +1,6 @@
-# DE10-Nano Cyclone V SoC example design for rapid prototyping
+# DE10-Nano reference design
 
-FPGA designs are notorious for being slow to deploy. Utilizing the power of embedded Linux, SD card flash memory, the HPS FPGA Manager, (and optional High Level Synthesis tools) we can drastically reduce the time to deploy and test new FPGA designs. This time, mainly due to its popularity and amiable pricetag, the target of choice is the Terasic DE10-Nano Cyclone V SoC board Revision C. This repository provides the necessary sources and tools to build a system on which you can rapidly prototype and test new FPGA designs.
+This repo includes guides to build basic FPGA bitstream, ARM bootloader, and Linux, all from source, for the Terasic DE10-Nano.
 
 ## Dependencies
 
@@ -39,22 +39,6 @@ Run the `build.sh` script to build the FPGA design. It will generate QSYS and IP
 Note: If you're running Quartus Lite you might need to build via the GUI since script support is limited. It might also be necessary to convert the sof to rbf manually in the Convert Programming File GUI. Be sure to choose passive parallel x16 and enable compression.
 
 You can clean up generated files with `git clean -fdx`.
-
-## Build the FPGA Config Tool
-
-The u-boot or OS can configure the FPGA via the FPGA Manager. To access it use the **FPGA Config Tool** which runs on any embedded Linux.
-
-This tool was developed by [Nicolás Hasbún](https://github.com/nhasbun/de10nano_fpga_linux_config). Due to minor changes, there is a copy in this repo as well. It is fully implemented in C using direct register access to configure the FPGA via HPS FPGA Manager. Partial reconfiguration might be worth studying in the future.
-
-Get the appropriate cross compiler with:
-
-```
-sudo apt install gcc-arm-linux-gnueabi
-```
-
-In `sw/fpga_config_tool` run `make` to build `fpga_config_tool`. This will later be used to configure the FPGA from the OS.
-
-Note: If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
 ## Build U-Boot, Linux Kernel and Buildroot
 
@@ -395,6 +379,18 @@ Run `util/warm_flash_and_config.sh` on the Host PC in order to flash and configu
 One way to observe a successful FPGA reconfiguration is to consecutively configure two rbfs with different LEDs flashing.
 
 Another way is to read and write on FPGA Memory Mapped Registers before reconfiguring the FPGA.
+
+## Build the FPGA Config Tool
+
+The u-boot or OS can configure the FPGA via the FPGA Manager. To access it use the **FPGA Config Tool** which runs on any embedded Linux. Get the appropriate cross compiler with:
+
+```
+sudo apt install gcc-arm-linux-gnueabi
+```
+
+In `sw/fpga_config_tool` run `make` to build `fpga_config_tool`. This will later be used to configure the FPGA from the OS.
+
+Note: If you want to use this tool on other boards, you might need to change the line `char rbf_file [32] = "sdcard/fpga.rbf";` and also `  uint8_t  cdratio      = 0x3;` in the `main.c`. It might also be necessary to set a different target for cross compilation, e.g. `CROSS_COMPILE = arm-linux-gnueabihf-` in the `makefile`.
 
 ## Access the FPGA logic via HPS
 

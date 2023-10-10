@@ -3,7 +3,7 @@ TARGET = fpga_config_tool
 SRCS=$(wildcard *.c functions/*.c)
 OBJECTS=$(SRCS:.c=.o)
 
-CFLAGS = -g -std=c99 -Wall -Werror
+CFLAGS = -g -std=c99 -Wall -Werror -O3
 LDFLAGS = -g -std=c99 -Wall -Werror -pthread -lpthread
 
 CROSS_COMPILE = arm-linux-gnueabi-
