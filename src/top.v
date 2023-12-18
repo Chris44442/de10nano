@@ -5,7 +5,7 @@ module top (
   output[2:0]  HPS_DDR3_BA,
   output       HPS_DDR3_CAS_N,
   output       HPS_DDR3_CK_N,
-  output       HPS_DDR3_CK_P,
+  outpt       HPS_DDR3_CK_P,
   output       HPS_DDR3_CKE,
   output       HPS_DDR3_CS_N,
   output[3:0]  HPS_DDR3_DM,
