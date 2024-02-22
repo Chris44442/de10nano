@@ -212,5 +212,32 @@ end process;
 
 LED(7 downto 6) <= std_logic_vector(cnt(23 downto 22));
 
+neorv32_top_inst: entity work.neorv32_top
+  generic map (
+    -- General --
+    CLOCK_FREQUENCY              => 50000000,   -- clock frequency of clk_i in Hz
+    INT_BOOTLOADER_EN            => false,             -- boot configuration: true = boot explicit bootloader; false = boot from int/ext (I)MEM
+    -- RISC-V CPU Extensions --
+    CPU_EXTENSION_RISCV_C        => true,              -- implement compressed extension?
+    CPU_EXTENSION_RISCV_M        => true,              -- implement mul/div extension?
+    CPU_EXTENSION_RISCV_Zicntr   => true,              -- implement base counters?
+    -- Internal Instruction memory --
+    MEM_INT_IMEM_EN              => true,              -- implement processor-internal instruction memory
+    MEM_INT_IMEM_SIZE            => 16*1024, -- size of processor-internal instruction memory in bytes
+    -- Internal Data memory --
+    MEM_INT_DMEM_EN              => true,              -- implement processor-internal data memory
+    MEM_INT_DMEM_SIZE            => 8*1024, -- size of processor-internal data memory in bytes
+    -- Processor peripherals --
+    IO_GPIO_NUM                  => 8,                 -- number of GPIO input/output pairs (0..64)
+    IO_MTIME_EN                  => true               -- implement machine system timer (MTIME)?
+  )
+  port map (
+    -- Global control --
+    clk_i  => FPGA_CLK1_50,     -- global clock, rising edge
+    rstn_i => hps_fpga_reset_n,    -- global reset, low-active, async
+    -- GPIO (available if IO_GPIO_NUM > 0) --
+    gpio_o(3 downto 0) => LED(3 downto 0) -- parallel output
+  );
+
 end rtl;
 
