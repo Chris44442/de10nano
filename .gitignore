@@ -1,4 +1,4 @@
-build
+output
 src/incremental_db
 src/hps_isw_handoff
 src/db
@@ -7,7 +7,5 @@ src/hps_sdram_p0_summary.csv
 src/soc.sopcinfo
 src/DE10.qws
 src/.qsys_edit
-sw/fpga_config_tool/main.o
-sw/fpga_config_tool/fpga_config_tool
 src/soc
 sw/**/target
