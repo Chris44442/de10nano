@@ -236,7 +236,12 @@ neorv32_top_inst: entity work.neorv32_top
     clk_i  => FPGA_CLK1_50,     -- global clock, rising edge
     rstn_i => hps_fpga_reset_n,    -- global reset, low-active, async
     -- GPIO (available if IO_GPIO_NUM > 0) --
-    gpio_o(3 downto 0) => LED(3 downto 0) -- parallel output
+    gpio_o(0) => LED(0), -- parallel output
+    gpio_o(1) => LED(1), -- parallel output
+    gpio_o(2) => LED(2), -- parallel output
+    gpio_o(3) => LED(3), -- parallel output
+    gpio_o(4) => LED(4), -- parallel output
+    gpio_o(5) => LED(5) -- parallel output
   );
 
 end rtl;
