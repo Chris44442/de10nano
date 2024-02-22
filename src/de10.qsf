@@ -390,7 +390,7 @@ set_global_assignment -name ECO_REGENERATE_REPORT ON
 set_global_assignment -name GENERATE_RBF_FILE ON
 
 set_global_assignment -name VHDL_FILE top.vhd
-set_global_assignment -name SDC_FILE DE10.sdc
+set_global_assignment -name SDC_FILE de10.sdc
 set_global_assignment -name QSYS_FILE soc.qsys
 
 
