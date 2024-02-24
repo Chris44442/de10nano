@@ -223,7 +223,7 @@ neorv32_top_inst: entity work.neorv32_top
     CPU_EXTENSION_RISCV_Zicntr   => true,              -- implement base counters?
     -- Internal Instruction memory --
     MEM_INT_IMEM_EN              => true,              -- implement processor-internal instruction memory
-    MEM_INT_IMEM_SIZE            => 16*1024, -- size of processor-internal instruction memory in bytes
+    MEM_INT_IMEM_SIZE            => 17*1024, -- size of processor-internal instruction memory in bytes
     -- Internal Data memory --
     MEM_INT_DMEM_EN              => true,              -- implement processor-internal data memory
     MEM_INT_DMEM_SIZE            => 8*1024, -- size of processor-internal data memory in bytes
