@@ -2,7 +2,7 @@
 
 source ~/.fpga_config_de10
 IP=$SOC_IP_DE10
-RBF="../build/DE10.rbf"
+RBF="../output/de10.rbf"
 RBF_HPS="~/sdcard/fpga.rbf"
 
 ssh root@$IP 'mkdir -p sdcard && mount /dev/mmcblk0p1 ~/sdcard'
