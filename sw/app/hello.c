@@ -1,38 +1,66 @@
 #include "system.h"
 #include "altera_avalon_pio_regs.h"
-#include "sys/alt_irq.h"
 #include "alt_types.h"
-#include <stdio.h>
-#include <unistd.h>
+#include "stdio.h"
+#include "stddef.h"
+#include "sys/alt_irq.h"
 
-void io_switch_isr(void * context);
-void io_switch_setup();
-volatile int edge_val = 0;
+static void handle_button_interrupts(void * context) {
+  /* Cast context to edge_capture's type. It is important that this
+  be declared volatile to avoid unwanted compiler optimization. */
+  volatile int * edge_capture_ptr = (volatile int * ) context;
+  /* Read the edge capture register on the button PIO. Store value.*/
+  * edge_capture_ptr = IORD_ALTERA_AVALON_PIO_EDGE_CAP(PIO_0_BASE);
 
-void io_switch_setup(void){
-  IOWR_ALTERA_AVALON_PIO_IRQ_MASK(PIO_0_BASE, 0xFFFFFFFF);
-  IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PIO_0_BASE, 0x0);
-  void * edge_val_ptr;
-  edge_val_ptr = (void *) &edge_val;
-  alt_ic_isr_register(PIO_0_IRQ_INTERRUPT_CONTROLLER_ID, PIO_0_IRQ, io_switch_isr, edge_val_ptr, 0x00);
-}
+// int edge_val = IORD_ALTERA_AVALON_PIO_EDGE_CAP(PIO_0_BASE);
+// printf("Edge value: %x\n", edge_val);
+// *edge_capture_ptr = edge_val;
+  /* Write to the edge capture register to reset it. */
 
-void io_switch_isr(void * context){
-  volatile int * edge_ptr;
-  edge_ptr = (volatile int *) context;
-  *edge_ptr = IORD_ALTERA_AVALON_PIO_EDGE_CAP(PIO_0_BASE);
+  // printf("doing interrupt lul \n");
+  usleep(100000);
   IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PIO_0_BASE, 0);
+  /* Read the PIO to delay ISR exit. This is done to prevent a
+  spurious interrupt in systems with high processor -> pio
+  latency and fast interrupts. */
+  IORD_ALTERA_AVALON_PIO_EDGE_CAP(PIO_0_BASE);
 }
+
+/* Declare a global variable to hold the edge capture value. */
+volatile int edge_capture = 0;
+/* Initialize the button_pio. */
+static void init_button_pio()
+{
+ /* Recast the edge_capture pointer to match the
+ alt_irq_register() function prototype. */
+ void * edge_capture_ptr = (void * ) & edge_capture;
+ /* Enable all 4 button interrupts. */
+ IOWR_ALTERA_AVALON_PIO_IRQ_MASK(PIO_0_BASE, 0xf);
+ /* Reset the edge capture register. */
+ IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PIO_0_BASE, 0x0);
+ /* Register the ISR. */
+ alt_ic_isr_register(PIO_0_IRQ_INTERRUPT_CONTROLLER_ID,
+ PIO_0_IRQ,
+ handle_button_interrupts,
+ edge_capture_ptr, 0x0);
+}
+
 
 int main(void){
-  printf("Entered main !\n");
+  printf("Entered 15 main !\n");
+
+  init_button_pio();
+
   int count = 0;
-  io_switch_setup();
   while(1){
-  if(edge_val != 0){
     count++;
-    edge_val = 0;
-    printf("incrementing count : %i\n", count);
-  }
+    usleep(80000);
+    if(edge_capture > 0){
+      edge_capture = 0;
+      printf("EDGE CAPTURED, YAYYYY\n");
+    } else {
+      printf("edge not captured, in while loop %i \n", count);
+    }
   }
 }
+

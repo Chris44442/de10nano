@@ -91,6 +91,22 @@
          type = "String";
       }
    }
+   element pio_0
+   {
+      datum _sortIndex
+      {
+         value = "7";
+         type = "int";
+      }
+   }
+   element pio_0.s1
+   {
+      datum baseAddress
+      {
+         value = "196608";
+         type = "String";
+      }
+   }
    element ram_0
    {
       datum _sortIndex
@@ -153,6 +169,11 @@
  <interface name="hps_0_h2f_user0_clock" internal="hps_0.h2f_user0_clock" />
  <interface name="hps_io" internal="hps_0.hps_io" type="conduit" dir="end" />
  <interface name="memory" internal="hps_0.memory" type="conduit" dir="end" />
+ <interface
+   name="pio_0_external_connection"
+   internal="pio_0.external_connection"
+   type="conduit"
+   dir="end" />
  <interface name="reset" internal="clk_0.clk_in_reset" type="reset" dir="end" />
  <module name="clk_0" kind="clock_source" version="24.1" enabled="1">
   <parameter name="clockFrequency" value="50000000" />
@@ -699,16 +720,16 @@
   <parameter name="AUTO_CLK_RESET_DOMAIN" value="1" />
   <parameter name="AUTO_DEVICE" value="5CSEBA6U23I7" />
   <parameter name="AUTO_DEVICE_SPEEDGRADE" value="7" />
-  <parameter name="AUTO_PLATFORM_IRQ_RX_INTERRUPTS_USED" value="1" />
+  <parameter name="AUTO_PLATFORM_IRQ_RX_INTERRUPTS_USED" value="3" />
   <parameter name="clockFrequency" value="50000000" />
-  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='intel_niosv_m_0.dm_agent' start='0x0' end='0x10000' type='intel_niosv_m.dm_agent' /><slave name='intel_niosv_m_0.timer_sw_agent' start='0x10000' end='0x10040' type='intel_niosv_m.timer_sw_agent' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x20000' end='0x20008' type='altera_avalon_jtag_uart.avalon_jtag_slave' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0x100000' type='altera_avalon_onchip_memory2.s1' /></address-map>]]></parameter>
+  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='intel_niosv_m_0.dm_agent' start='0x0' end='0x10000' type='intel_niosv_m.dm_agent' /><slave name='intel_niosv_m_0.timer_sw_agent' start='0x10000' end='0x10040' type='intel_niosv_m.timer_sw_agent' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x20000' end='0x20008' type='altera_avalon_jtag_uart.avalon_jtag_slave' /><slave name='pio_0.s1' start='0x30000' end='0x30010' type='altera_avalon_pio.s1' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0xC0000' type='altera_avalon_onchip_memory2.s1' /></address-map>]]></parameter>
   <parameter name="deviceFamily" value="Cyclone V" />
   <parameter name="enableAvalonInterface" value="true" />
   <parameter name="enableDebug" value="true" />
   <parameter name="enableDebugReset" value="false" />
   <parameter name="enableECCLite" value="false" />
   <parameter name="hartId" value="0" />
-  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='intel_niosv_m_0.dm_agent' start='0x0' end='0x10000' type='intel_niosv_m.dm_agent' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0x100000' type='altera_avalon_onchip_memory2.s1' /></address-map>]]></parameter>
+  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='intel_niosv_m_0.dm_agent' start='0x0' end='0x10000' type='intel_niosv_m.dm_agent' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0xC0000' type='altera_avalon_onchip_memory2.s1' /></address-map>]]></parameter>
   <parameter name="interruptMode" value="0" />
   <parameter name="numGpr" value="32" />
   <parameter name="pipelineArch" value="true" />
@@ -756,7 +777,7 @@
   <parameter name="initMemContent" value="true" />
   <parameter name="initializationFileName" value="hello.hex" />
   <parameter name="instanceID" value="NONE" />
-  <parameter name="memorySize" value="524288" />
+  <parameter name="memorySize" value="262144" />
   <parameter name="readDuringWriteMode" value="DONT_CARE" />
   <parameter name="resetrequest_enabled" value="true" />
   <parameter name="simAllowMRAMContentsFile" value="false" />
@@ -767,6 +788,20 @@
   <parameter name="useNonDefaultInitFile" value="true" />
   <parameter name="useShallowMemBlocks" value="false" />
   <parameter name="writable" value="true" />
+ </module>
+ <module name="pio_0" kind="altera_avalon_pio" version="24.1" enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="true" />
+  <parameter name="clockRate" value="50000000" />
+  <parameter name="direction" value="Input" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="true" />
+  <parameter name="irqType" value="EDGE" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
  </module>
  <module
    name="ram_0"
@@ -838,6 +873,15 @@
    kind="avalon"
    version="24.1"
    start="intel_niosv_m_0.data_manager"
+   end="pio_0.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00030000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="24.1"
+   start="intel_niosv_m_0.data_manager"
    end="intel_niosv_m_0.timer_sw_agent">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x00010000" />
@@ -886,6 +930,7 @@
    start="clk_0.clk"
    end="intel_niosv_m_0.clk" />
  <connection kind="clock" version="24.1" start="clk_0.clk" end="jtag_uart_0.clk" />
+ <connection kind="clock" version="24.1" start="clk_0.clk" end="pio_0.clk" />
  <connection kind="clock" version="24.1" start="clk_0.clk" end="ram_0.clk1" />
  <connection
    kind="clock"
@@ -905,6 +950,13 @@
   <parameter name="irqNumber" value="0" />
  </connection>
  <connection
+   kind="interrupt"
+   version="24.1"
+   start="intel_niosv_m_0.platform_irq_rx"
+   end="pio_0.irq">
+  <parameter name="irqNumber" value="1" />
+ </connection>
+ <connection
    kind="reset"
    version="24.1"
    start="clk_0.clk_reset"
@@ -919,6 +971,7 @@
    version="24.1"
    start="clk_0.clk_reset"
    end="jtag_uart_0.reset" />
+ <connection kind="reset" version="24.1" start="clk_0.clk_reset" end="pio_0.reset" />
  <connection
    kind="reset"
    version="24.1"

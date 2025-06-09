@@ -61,6 +61,7 @@ end top;
 architecture rtl of top is
   signal hps_fpga_reset_n : std_logic;
   signal cnt : unsigned(23 downto 0);
+  signal irq1 : std_logic := '0';
 
 component soc is port (
   clk_clk                         : in    std_logic                     := 'X';             -- clk
@@ -129,7 +130,8 @@ component soc is port (
   memory_mem_odt                  : out   std_logic;                                        -- mem_odt
   memory_mem_dm                   : out   std_logic_vector(3 downto 0);                     -- mem_dm
   memory_oct_rzqin                : in    std_logic                     := 'X';             -- oct_rzqin
-  reset_reset_n                   : in    std_logic                     := 'X'              -- reset_n
+  reset_reset_n                   : in    std_logic                     := 'X';              -- reset_n
+  pio_0_external_connection_export : in    std_logic                     := 'X'              -- irq
 );
 end component soc;
 
@@ -201,8 +203,10 @@ soc_0 : soc port map (
   hps_io_hps_io_gpio_inst_GPIO40 => HPS_LTC_GPIO,
   hps_io_hps_io_gpio_inst_GPIO53 => HPS_LED,
   hps_io_hps_io_gpio_inst_GPIO54 => HPS_KEY,
-  hps_io_hps_io_gpio_inst_GPIO61 => HPS_GSENSOR_INT
+  hps_io_hps_io_gpio_inst_GPIO61 => HPS_GSENSOR_INT,
+  pio_0_external_connection_export => irq1
 );
+
 
 process(FPGA_CLK1_50) begin
   if rising_edge(FPGA_CLK1_50) then
@@ -210,7 +214,13 @@ process(FPGA_CLK1_50) begin
   end if;
 end process;
 
-LED(7 downto 6) <= std_logic_vector(cnt(23 downto 22));
+LED(7) <= cnt(23) and cnt(10) and cnt(9);
+
+LED(4) <= not KEY(0);
+LED(3) <= not KEY(1);
+LED(2) <= not KEY(0) or not KEY(1);
+
+irq1 <= not KEY(0) or not KEY(1);
 
 end architecture;
 
