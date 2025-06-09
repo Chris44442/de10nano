@@ -60,8 +60,9 @@ end top;
 
 architecture rtl of top is
   signal hps_fpga_reset_n : std_logic;
-  signal cnt : unsigned(23 downto 0);
+  signal cnt : unsigned(24 downto 0);
   signal irq1 : std_logic := '0';
+  signal key_0_debounced : std_logic := '0';
 
 component soc is port (
   clk_clk                         : in    std_logic                     := 'X';             -- clk
@@ -207,20 +208,23 @@ soc_0 : soc port map (
   pio_0_external_connection_export => irq1
 );
 
-
 process(FPGA_CLK1_50) begin
   if rising_edge(FPGA_CLK1_50) then
     cnt <= cnt + 1;
   end if;
 end process;
 
-LED(7) <= cnt(23) and cnt(10) and cnt(9);
-
+LED(7) <= cnt(24) and cnt(10) and cnt(9);
 LED(4) <= not KEY(0);
-LED(3) <= not KEY(1);
-LED(2) <= not KEY(0) or not KEY(1);
 
-irq1 <= not KEY(0) or not KEY(1);
+debounce_inst: entity work.debounce
+ port map(
+    clk => FPGA_CLK1_50,
+    sw_i => not KEY(0),
+    sw_o => key_0_debounced
+);
+
+irq1 <= key_0_debounced;
 
 end architecture;
 

@@ -393,6 +393,7 @@ set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
 
 set_global_assignment -name VHDL_FILE top.vhd
+set_global_assignment -name VHDL_FILE debounce.vhd
 set_global_assignment -name SDC_FILE de10.sdc
 set_global_assignment -name QSYS_FILE soc.qsys
 
