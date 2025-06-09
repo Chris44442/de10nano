@@ -9,3 +9,7 @@ src/DE10.qws
 src/.qsys_edit
 src/soc
 sw/**/target
+sw/bsp
+sw/app/release
+gdbopxdriscv.ini
+sw/app/CMakeLists.txt
