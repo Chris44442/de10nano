@@ -18,7 +18,7 @@ static void handle_button_interrupts(void * context) {
   /* Write to the edge capture register to reset it. */
 
   // printf("doing interrupt lul \n");
-  usleep(100000);
+  // usleep(100000);
   IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PIO_0_BASE, 0);
   /* Read the PIO to delay ISR exit. This is done to prevent a
   spurious interrupt in systems with high processor -> pio
@@ -54,12 +54,12 @@ int main(void){
   int count = 0;
   while(1){
     count++;
-    usleep(80000);
+    // usleep(80000);
     if(edge_capture > 0){
       edge_capture = 0;
       printf("EDGE CAPTURED, YAYYYY\n");
     } else {
-      printf("edge not captured, in while loop %i \n", count);
+      // printf("edge not captured, in while loop %i \n", count);
     }
   }
 }

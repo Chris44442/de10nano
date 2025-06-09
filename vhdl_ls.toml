@@ -1,5 +1,5 @@
 [libraries]
 de10.files = [
   'src/*.vhd',
-  'src/rtl/core/*.vhd',
+
 ]

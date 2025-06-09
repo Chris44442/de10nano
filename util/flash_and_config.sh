@@ -1,7 +1,6 @@
 #!/bin/bash
 
-source ~/.fpga_config_de10
-IP=$SOC_IP_DE10
+IP=192.168.1.2
 RBF="../output/de10.rbf"
 RBF_HPS="~/sdcard/fpga.rbf"
 
