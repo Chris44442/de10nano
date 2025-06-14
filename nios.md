@@ -1,3 +1,5 @@
+## Nios V
+
 - Generate qsys in Platform Designer
 - To build the bsp run:
 
@@ -41,4 +43,20 @@ niosv-shell
 juart-terminal -c 1 -d 0 -i 0
 ```
 
+## System Console
+
+- in Platform Designer add JTAG to Avalon Master Bridge
+- Connect a RAM e.g. at address 0x1000 to it
+- After compiling open System Console and type:
+
+```tcl
+set masters [get_service_paths master]
+set master [lindex $masters 0]
+open_service master $master
+master_write_32 $master 0x1000 0xaffe1234
+set data [master_read_32 $master 0x1000 1]
+puts $data
+```
+
+This should print 0xaffe1234.
 
