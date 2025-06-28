@@ -64,6 +64,17 @@ architecture rtl of top is
   signal irq1 : std_logic := '0';
   signal key_0_debounced : std_logic := '0';
 
+  signal s2_adr : std_logic_vector(7 downto 0);
+  signal s2_wr_dat : std_logic_vector(31 downto 0);
+  signal s2_wr_en : std_logic;
+
+  constant increment_1 : unsigned(31 downto 0) := to_unsigned(85899346,32);
+
+  signal u_cnt : unsigned(31 downto 0) := (others => '0');
+  signal rsh_count : unsigned(31 downto 0) := (others => '0');
+  signal bcm_count : unsigned(31 downto 0) := (others => '0');
+  signal az_0, az_1, az_2 : unsigned(31 downto 0) := (others => '0');
+
 component soc is port (
   clk_clk                         : in    std_logic                     := 'X';             -- clk
   h2f_reset_reset_n               : out   std_logic;                                        -- reset_n
@@ -132,7 +143,14 @@ component soc is port (
   memory_mem_dm                   : out   std_logic_vector(3 downto 0);                     -- mem_dm
   memory_oct_rzqin                : in    std_logic                     := 'X';             -- oct_rzqin
   reset_reset_n                   : in    std_logic                     := 'X';              -- reset_n
-  pio_0_external_connection_export : in    std_logic                     := 'X'              -- irq
+  pio_0_external_connection_export : in    std_logic                     := 'X';              -- irq
+			s2_address                       : in    std_logic_vector(7 downto 0)  := (others => 'X'); -- address
+			s2_chipselect                    : in    std_logic                     := 'X';             -- chipselect
+			s2_clken                         : in    std_logic                     := 'X';             -- clken
+			s2_write                         : in    std_logic                     := 'X';             -- write
+			s2_readdata                      : out   std_logic_vector(31 downto 0);                    -- readdata
+			s2_writedata                     : in    std_logic_vector(31 downto 0) := (others => 'X'); -- writedata
+			s2_byteenable                    : in    std_logic_vector(3 downto 0)  := (others => 'X')  -- byteenable
 );
 end component soc;
 
@@ -205,7 +223,14 @@ soc_0 : soc port map (
   hps_io_hps_io_gpio_inst_GPIO53 => HPS_LED,
   hps_io_hps_io_gpio_inst_GPIO54 => HPS_KEY,
   hps_io_hps_io_gpio_inst_GPIO61 => HPS_GSENSOR_INT,
-  pio_0_external_connection_export => irq1
+  pio_0_external_connection_export => irq1,
+  s2_address                       => s2_adr,                       --                        s2.address
+  s2_chipselect                    => '1',                    --                          .chipselect
+  s2_clken                         => '1',                         --                          .clken
+  s2_write                         => s2_wr_en,                         --                          .write
+  s2_readdata                      => open,                      --                          .readdata
+  s2_writedata                     => s2_wr_dat,                     --                          .writedata
+  s2_byteenable                    => std_logic_vector'(4x"F")                     --                          .byteenable
 );
 
 process(FPGA_CLK1_50) begin
@@ -225,6 +250,64 @@ debounce_inst: entity work.debounce
 );
 
 irq1 <= key_0_debounced;
+
+
+
+
+process(FPGA_CLK1_50) begin
+  if rising_edge(FPGA_CLK1_50) then
+    s2_wr_en <= '0';
+    s2_wr_dat <= (others => 'X');
+
+
+    if u_cnt = 999999 then
+      u_cnt <= (others => '0');
+    else
+      u_cnt <= u_cnt + 1;
+    end if;
+
+
+    case u_cnt is
+      when 32x"0" =>
+        s2_adr <= 8x"0";
+        s2_wr_en <= '1';
+        s2_wr_dat <= std_logic_vector(rsh_count);
+      when 32x"1" =>
+        s2_adr <= 8x"1";
+        s2_wr_en <= '1';
+        s2_wr_dat <= std_logic_vector(bcm_count);
+      when 32x"2" =>
+        s2_adr <= 8x"2";
+        s2_wr_en <= '1';
+        s2_wr_dat <= std_logic_vector(az_0);
+      when 32x"3" =>
+        s2_adr <= 8x"3";
+        s2_wr_en <= '1';
+        s2_wr_dat <= std_logic_vector(az_1);
+      when 32x"4" =>
+        s2_adr <= 8x"4";
+        s2_wr_en <= '1';
+        s2_wr_dat <= std_logic_vector(az_2);
+
+
+      when 32d"200" =>
+        rsh_count <= rsh_count + 64;
+        bcm_count <= bcm_count + 1;
+
+        az_0 <= az_0 + increment_1;
+        az_1 <= az_1 + increment_1;
+        az_2 <= az_2 + increment_1;
+
+
+      when others =>
+    end case;
+
+
+
+  end if;
+end process;
+
+
 
 end architecture;
 
