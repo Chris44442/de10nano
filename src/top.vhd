@@ -143,7 +143,6 @@ component soc is port (
   memory_mem_dm                   : out   std_logic_vector(3 downto 0);                     -- mem_dm
   memory_oct_rzqin                : in    std_logic                     := 'X';             -- oct_rzqin
   reset_reset_n                   : in    std_logic                     := 'X';              -- reset_n
-  pio_0_external_connection_export : in    std_logic                     := 'X';              -- irq
 			s2_address                       : in    std_logic_vector(7 downto 0)  := (others => 'X'); -- address
 			s2_chipselect                    : in    std_logic                     := 'X';             -- chipselect
 			s2_clken                         : in    std_logic                     := 'X';             -- clken
@@ -223,7 +222,6 @@ soc_0 : soc port map (
   hps_io_hps_io_gpio_inst_GPIO53 => HPS_LED,
   hps_io_hps_io_gpio_inst_GPIO54 => HPS_KEY,
   hps_io_hps_io_gpio_inst_GPIO61 => HPS_GSENSOR_INT,
-  pio_0_external_connection_export => irq1,
   s2_address                       => s2_adr,                       --                        s2.address
   s2_chipselect                    => '1',                    --                          .chipselect
   s2_clken                         => '1',                         --                          .clken
