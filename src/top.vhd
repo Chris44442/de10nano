@@ -61,15 +61,10 @@ end top;
 architecture rtl of top is
   signal hps_fpga_reset_n : std_logic;
   signal cnt : unsigned(24 downto 0);
-  signal irq1 : std_logic := '0';
-  signal key_0_debounced : std_logic := '0';
-
   signal s2_adr : std_logic_vector(7 downto 0);
   signal s2_wr_dat : std_logic_vector(31 downto 0);
   signal s2_wr_en : std_logic;
-
   constant increment_1 : unsigned(31 downto 0) := to_unsigned(85899346,32);
-
   signal u_cnt : unsigned(31 downto 0) := (others => '0');
   signal rsh_count : unsigned(31 downto 0) := (others => '0');
   signal bcm_count : unsigned(31 downto 0) := (others => '0');
@@ -240,30 +235,16 @@ end process;
 LED(7) <= cnt(24) and cnt(10) and cnt(9);
 LED(4) <= not KEY(0);
 
-debounce_inst: entity work.debounce
- port map(
-    clk => FPGA_CLK1_50,
-    sw_i => not KEY(0),
-    sw_o => key_0_debounced
-);
-
-irq1 <= key_0_debounced;
-
-
-
-
 process(FPGA_CLK1_50) begin
   if rising_edge(FPGA_CLK1_50) then
     s2_wr_en <= '0';
     s2_wr_dat <= (others => 'X');
-
 
     if u_cnt = 999999 then
       u_cnt <= (others => '0');
     else
       u_cnt <= u_cnt + 1;
     end if;
-
 
     case u_cnt is
       when 32x"0" =>
@@ -287,7 +268,6 @@ process(FPGA_CLK1_50) begin
         s2_wr_en <= '1';
         s2_wr_dat <= std_logic_vector(az_2);
 
-
       when 32d"200" =>
         rsh_count <= rsh_count + 64;
         bcm_count <= bcm_count + 1;
@@ -296,16 +276,10 @@ process(FPGA_CLK1_50) begin
         az_1 <= az_1 + increment_1;
         az_2 <= az_2 + increment_1;
 
-
       when others =>
     end case;
-
-
-
   end if;
 end process;
-
-
 
 end architecture;
 

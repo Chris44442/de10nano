@@ -13,3 +13,4 @@ sw/bsp
 sw/app/release
 gdbopxdriscv.ini
 sw/app/CMakeLists.txt
+src/de10_assignment_defaults.qdf
