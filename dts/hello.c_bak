@@ -1,0 +1,185 @@
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <asm/io.h>   // for lower_32_bits, upper_32_bits
+#include <linux/delay.h>
+
+#define DRIVER_NAME "msgdma_test"
+
+/* Adjust base if needed */
+#define LW_BRIDGE_BASE   0xff200000
+
+#define MSGDMA_CSR_OFFSET        0x3000
+#define MSGDMA_PREFETCH_OFFSET   0x3100
+
+#define MAP_SIZE 0x100
+
+#define CONTROL_REG 0x04
+#define START_BIT   0x01
+
+#define DMA_TEST_SIZE 1024
+static void *dma_src;
+static dma_addr_t dma_src_phys;
+
+struct msgdma_desc {
+    u32 reserved0;
+    u32 write_addr;
+    u32 length;
+    u32 next_desc;
+    u32 reserved7;
+    u32 reserved8;
+    u32 reserved;
+    u32 control;
+};
+#include <linux/dma-mapping.h>
+
+static struct msgdma_desc *desc;
+static dma_addr_t desc_phys;
+
+static void __iomem *csr_base;
+static void __iomem *prefetch_base;
+
+static int __init msgdma_init(void)
+{
+    pr_info(DRIVER_NAME ": init\n");
+
+    csr_base = ioremap(LW_BRIDGE_BASE + MSGDMA_CSR_OFFSET, MAP_SIZE);
+    if (!csr_base) {
+        pr_err("Failed to map CSR\n");
+        return -ENOMEM;
+    }
+
+    prefetch_base = ioremap(LW_BRIDGE_BASE + MSGDMA_PREFETCH_OFFSET, MAP_SIZE);
+    if (!prefetch_base) {
+        pr_err("Failed to map Prefetch CSR\n");
+        iounmap(csr_base);
+        return -ENOMEM;
+    }
+
+
+
+
+// allocate 1 KB for source
+dma_src = kmalloc(DMA_TEST_SIZE, GFP_KERNEL);
+if (!dma_src) {
+    pr_err("Failed to allocate DMA source buffer\n");
+    dma_free_coherent(NULL, sizeof(*desc), desc, desc_phys); // or kmalloc free
+    return -ENOMEM;
+}
+
+// get physical address (for the engine)
+dma_src_phys = virt_to_phys(dma_src);
+
+pr_info("DMA source virtual address: %px\n", dma_src);
+pr_info("DMA source physical address: 0x%lx\n", (unsigned long)dma_src_phys);
+
+
+
+
+    int i;
+    u64 *buf64 = (u64 *)dma_src;
+
+    pr_info("First 10 values before:\n");
+    for (i = 0; i < 10; i++) {
+        pr_info("buf[%d] = 0x%016llx\n", i, buf64[i]);
+    }
+
+
+
+
+
+
+
+
+
+    // allocate DMA-safe memory for descriptor // TODO FIX NULL
+    // desc = dma_alloc_coherent(NULL, sizeof(*desc), &desc_phys, GFP_KERNEL); // TODO fix NULL later for platform driver
+    // if (!desc) {
+    //     pr_err("Failed to allocate descriptor\n");
+    //     return -ENOMEM;
+    // }
+// desc = dma_alloc_coherent(NULL, sizeof(*desc), &desc_phys, GFP_KERNEL);
+    desc = kmalloc(sizeof(*desc), GFP_KERNEL);
+    desc_phys = virt_to_phys(desc);
+
+    // initialize descriptor
+    memset(desc, 0, sizeof(*desc));
+
+    // desc->read_addr  = 0x00000000;   // dummy for now
+    // desc->write_addr = 0x00000000;   // dummy
+    // desc->length     = 0;            // no transfer yet
+    // desc->next_desc  = 0;            // end of chain
+    //
+    // /* control: OWNED_BY_HW = 0 → last descriptor */
+    // desc->control = 0x0;
+// fill the descriptor
+desc->write_addr = dma_src_phys;             // dummy write for now, or allocate target buffer later
+desc->length     = 0x30;   // 1 KB
+desc->next_desc  = 0;               // single descriptor
+desc->control    = 0x40000000;               // OWNED_BY_HW = 1 (tell hardware it can start)
+
+    // print some desc content
+    pr_info("Descriptor virtual address: %px\n", desc);
+    pr_info("Descriptor physical address: 0x%pad\n", &desc_phys);
+
+
+    // write desc addr to the prefetch csr
+    iowrite32(lower_32_bits(desc_phys), prefetch_base + 0x04);
+    iowrite32(upper_32_bits(desc_phys), prefetch_base + 0x08);
+    pr_info("Descriptor fed to prefetcher: 0x%08x 0x%08x\n",
+            lower_32_bits(desc_phys), upper_32_bits(desc_phys));
+
+
+    // u32 val = ioread32(csr_base + CONTROL_REG);
+    // val |= START_BIT;
+    // iowrite32(val, csr_base + CONTROL_REG);
+    u32 val = ioread32(prefetch_base );
+    val |= START_BIT;
+    iowrite32(val, prefetch_base );
+
+    pr_info("DMA engine started\n");
+    //
+    //
+    // Prefetcher status
+    u32 status = ioread32(prefetch_base + 0x00); // offset for status
+    pr_info("Prefetcher status: 0x%08x\n", status);
+
+    // DMA engine status
+    u32 dma_status = ioread32(csr_base + 0x00); // typical status register
+    pr_info("DMA engine status: 0x%08x\n", dma_status);
+
+
+
+    // int i;
+    // u32 *buf = (u32 *)dma_src;
+
+    pr_info("First 10 values written by DMA:\n");
+    for (i = 0; i < 10; i++) {
+        pr_info("buf[%d] = 0x%016llx\n", i, buf64[i]);
+    }
+
+    return 0;
+}
+
+static void __exit msgdma_exit(void)
+{
+    pr_info(DRIVER_NAME ": exit\n");
+
+    // if (desc)
+    //     dma_free_coherent(NULL, sizeof(*desc), desc, desc_phys);
+    if (dma_src)
+        kfree(dma_src);
+
+    if (csr_base)
+        iounmap(csr_base);
+
+    if (prefetch_base)
+        iounmap(prefetch_base);
+}
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("You");
+MODULE_DESCRIPTION("Minimal mSGDMA test driver");
+
+module_init(msgdma_init);
+module_exit(msgdma_exit);
