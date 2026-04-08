@@ -60,15 +60,19 @@ end top;
 
 architecture rtl of top is
   signal hps_fpga_reset_n : std_logic;
-  signal cnt : unsigned(24 downto 0);
-  signal s2_adr : std_logic_vector(7 downto 0);
-  signal s2_wr_dat : std_logic_vector(31 downto 0);
-  signal s2_wr_en : std_logic;
-  constant increment_1 : unsigned(31 downto 0) := to_unsigned(85899346,32);
-  signal u_cnt : unsigned(31 downto 0) := (others => '0');
-  signal rsh_count : unsigned(31 downto 0) := (others => '0');
-  signal bcm_count : unsigned(31 downto 0) := (others => '0');
-  signal az_0, az_1, az_2 : unsigned(31 downto 0) := (others => '0');
+  signal cnt : unsigned(24 downto 0) := (others => '0');
+  signal s2_adr : std_logic_vector(7 downto 0) := (others => '0');
+  signal s2_wr_dat : std_logic_vector(31 downto 0) := (others => '0');
+  signal s2_wr_en : std_logic := '0';
+  signal msgdma_0_st_sink_data : std_logic_vector(63 downto 0) := (others => '0');
+  signal cnt2 : unsigned(63 downto 0) := 64x"7";
+  signal msgdma_0_st_sink_ready : std_logic := '0';
+  signal msgdma_0_st_sink_valid : std_logic := '0';
+
+  signal startup_enable : std_logic := '0';
+			-- msgdma_0_st_sink_data           => msgdma_0_st_sink_data,
+			-- msgdma_0_st_sink_valid          => msgdma_0_st_sink_valid,
+			-- msgdma_0_st_sink_ready          => msgdma_0_st_sink_ready
 
 component soc is port (
   clk_clk                         : in    std_logic                     := 'X';             -- clk
@@ -144,7 +148,11 @@ component soc is port (
 			s2_write                         : in    std_logic                     := 'X';             -- write
 			s2_readdata                      : out   std_logic_vector(31 downto 0);                    -- readdata
 			s2_writedata                     : in    std_logic_vector(31 downto 0) := (others => 'X'); -- writedata
-			s2_byteenable                    : in    std_logic_vector(3 downto 0)  := (others => 'X')  -- byteenable
+			s2_byteenable                    : in    std_logic_vector(3 downto 0)  := (others => 'X');  -- byteenable
+
+			msgdma_0_st_sink_data           : in    std_logic_vector(63 downto 0) := (others => 'X'); -- data
+			msgdma_0_st_sink_valid          : in    std_logic                     := 'X';             -- valid
+			msgdma_0_st_sink_ready          : out   std_logic                                         -- ready
 );
 end component soc;
 
@@ -223,63 +231,46 @@ soc_0 : soc port map (
   s2_write                         => s2_wr_en,                         --                          .write
   s2_readdata                      => open,                      --                          .readdata
   s2_writedata                     => s2_wr_dat,                     --                          .writedata
-  s2_byteenable                    => std_logic_vector'(4x"F")                     --                          .byteenable
+  s2_byteenable                    => std_logic_vector'(4x"F"),                     --                          .byteenable
+
+			msgdma_0_st_sink_data           => msgdma_0_st_sink_data,
+			msgdma_0_st_sink_valid          => msgdma_0_st_sink_valid,
+			msgdma_0_st_sink_ready          => msgdma_0_st_sink_ready
 );
 
 process(FPGA_CLK1_50) begin
   if rising_edge(FPGA_CLK1_50) then
     cnt <= cnt + 1;
+
+    if cnt(24) then
+      startup_enable <= '1';
+    end if;
+
+    if (msgdma_0_st_sink_ready = '1' and msgdma_0_st_sink_valid = '1') then
+        cnt2 <= cnt2 + 1;
+    end if;
+
+    if startup_enable then
+      msgdma_0_st_sink_valid <= '1';
+    else
+      msgdma_0_st_sink_valid <= '0';
+    end if;
+    msgdma_0_st_sink_data  <= std_logic_vector(cnt2);
+
+    -- bug:
+    -- if msgdma_0_st_sink_ready then
+    --   cnt2 <= cnt2 + 1;
+    --   msgdma_0_st_sink_data <= std_logic_vector(cnt2);
+    --   msgdma_0_st_sink_valid <= '1';
+    -- else
+    --   msgdma_0_st_sink_data <= (others => 'X');
+    --   msgdma_0_st_sink_valid <= '0';
+    -- end if;
   end if;
 end process;
 
 LED(7) <= cnt(24) and cnt(10) and cnt(9);
 LED(4) <= not KEY(0);
-
-process(FPGA_CLK1_50) begin
-  if rising_edge(FPGA_CLK1_50) then
-    s2_wr_en <= '0';
-    s2_wr_dat <= (others => 'X');
-
-    if u_cnt = 999999 then
-      u_cnt <= (others => '0');
-    else
-      u_cnt <= u_cnt + 1;
-    end if;
-
-    case u_cnt is
-      when 32x"0" =>
-        s2_adr <= 8x"0";
-        s2_wr_en <= '1';
-        s2_wr_dat <= std_logic_vector(rsh_count);
-      when 32x"1" =>
-        s2_adr <= 8x"1";
-        s2_wr_en <= '1';
-        s2_wr_dat <= std_logic_vector(bcm_count);
-      when 32x"2" =>
-        s2_adr <= 8x"2";
-        s2_wr_en <= '1';
-        s2_wr_dat <= std_logic_vector(az_0);
-      when 32x"3" =>
-        s2_adr <= 8x"3";
-        s2_wr_en <= '1';
-        s2_wr_dat <= std_logic_vector(az_1);
-      when 32x"4" =>
-        s2_adr <= 8x"4";
-        s2_wr_en <= '1';
-        s2_wr_dat <= std_logic_vector(az_2);
-
-      when 32d"200" =>
-        rsh_count <= rsh_count + 64;
-        bcm_count <= bcm_count + 1;
-
-        az_0 <= az_0 + increment_1;
-        az_1 <= az_1 + increment_1;
-        az_2 <= az_2 + increment_1;
-
-      when others =>
-    end case;
-  end if;
-end process;
 
 end architecture;
 
