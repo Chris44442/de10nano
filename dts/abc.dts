@@ -24,9 +24,9 @@
       ranges;
 
       dma_reserved: buffer@38000000 {
-          compatible = "shared-dma-pool";
-          reg = <0x38000000 0x04000000>; // 64MB at the end of 1GB RAM
-          no-map; // Critical: keeps it out of the kernel's normal cacheable map
+          compatible = "shared-dma-pool"; // Required!
+          reg = <0x38000000 0x04000000>;
+          no-map;
       };
   };
 
@@ -575,15 +575,16 @@
 			};
 		};
 
-		fpga_bridge@ff400000 {
+		fpga_bridge@ff200000 {
 			compatible = "altr,socfpga-lwhps2fpga-bridge";
-			reg = <0xff400000 0x100000>;
+			reg = <0xff200000 0x200000>;
 			resets = <0x06 0x61>;
 			clocks = <0x05>;
 
       #address-cells = <1>;
       #size-cells = <1>;
-      ranges;
+      ranges = <0x00000000 0xff200000 0x00200000>;
+      dma-ranges = <0x00000000 0x00000000 0x40000000>;
 
       msgdma@3000 {
           compatible = "altr,msgdma-1.0";

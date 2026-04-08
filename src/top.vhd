@@ -245,27 +245,23 @@ process(FPGA_CLK1_50) begin
     if cnt(24) then
       startup_enable <= '1';
     end if;
-
-    if (msgdma_0_st_sink_ready = '1' and msgdma_0_st_sink_valid = '1') then
-        cnt2 <= cnt2 + 1;
-    end if;
-
     if startup_enable then
       msgdma_0_st_sink_valid <= '1';
     else
       msgdma_0_st_sink_valid <= '0';
     end if;
-    msgdma_0_st_sink_data  <= std_logic_vector(cnt2);
 
-    -- bug:
-    -- if msgdma_0_st_sink_ready then
-    --   cnt2 <= cnt2 + 1;
-    --   msgdma_0_st_sink_data <= std_logic_vector(cnt2);
-    --   msgdma_0_st_sink_valid <= '1';
-    -- else
-    --   msgdma_0_st_sink_data <= (others => 'X');
-    --   msgdma_0_st_sink_valid <= '0';
-    -- end if;
+    -- Data and Counter logic: 
+    -- ONLY increment when a transfer actually occurs
+    if (msgdma_0_st_sink_ready = '1' and msgdma_0_st_sink_valid = '1') then
+        cnt2 <= cnt2 + 1;
+        -- The line below ensures the NEXT data is ready for the NEXT handshake
+        msgdma_0_st_sink_data <= std_logic_vector(cnt2 + 1);
+    elsif (msgdma_0_st_sink_valid = '0') then
+        -- Initial value before first transfer
+        msgdma_0_st_sink_data <= std_logic_vector(cnt2);
+    end if;
+
   end if;
 end process;
 
