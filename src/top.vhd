@@ -273,6 +273,7 @@ begin
             case state is
                 when 0 => -- HEADER (SOP)
                     msgdma_0_st_sink_data <= HEADER_VAL;
+                    msgdma_0_st_sink_valid <= '1';
                     msgdma_0_st_sink_startofpacket <= '1';
                     msgdma_0_st_sink_endofpacket   <= '0';
                     
@@ -281,6 +282,7 @@ begin
 
                 when 1 => -- PAYLOAD (Counter)
                     msgdma_0_st_sink_data <= std_logic_vector(data_cnt);
+                    msgdma_0_st_sink_valid <= '1';
                     msgdma_0_st_sink_startofpacket <= '0';
                     msgdma_0_st_sink_endofpacket   <= '0';
                     
@@ -295,11 +297,12 @@ begin
 
                 when 2 => -- FOOTER (EOP)
                     msgdma_0_st_sink_data <= FOOTER_VAL;
+                    msgdma_0_st_sink_valid <= '1';
                     msgdma_0_st_sink_startofpacket <= '0';
                     msgdma_0_st_sink_endofpacket   <= '1';
                     
                     -- Reset data counter for next message (or keep it running, your choice)
-                    data_cnt <= to_unsigned(1, 64);
+                    data_cnt <= data_cnt + 1;
                     
                     -- Cycle through lengths: 80 (10 words), 120 (15 words), 160 (20 words)
                     -- payload_max = total_words - 2 (header and footer)
