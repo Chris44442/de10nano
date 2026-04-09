@@ -11,8 +11,12 @@
 #include <linux/miscdevice.h>
 #include <linux/fs.h>
 
+#include <linux/interrupt.h>
+
+#include <linux/wait.h>
+#include <linux/sched.h>
+
 #define DRIVER_NAME "msgdma_platform_test"
-#define START_BIT   0x09  // Global Interrupt Enable Mask, Run
 // The mSGDMA descriptor structure (Standard/Extended)
 struct msgdma_desc {
     u32 reserved0;
@@ -40,47 +44,79 @@ struct msgdma_dev {
 
     struct device *dev; // store &pdev->dev here
     struct miscdevice miscdev;
+
+    // irq stuff
+    wait_queue_head_t wait_queue;
+    int data_ready;
 };
 
 
-static struct msgdma_dev *to_mdev(struct file *file) {
-    return container_of(file->private_data, struct msgdma_dev, miscdev);
-}
-
-// static irqreturn_t msgdma_irq_handler(int irq, void *dev_id)
-// {
-//     struct msgdma_dev *mdev = dev_id;
-//     u32 status;
-//
-//     // 1. Read status to see what happened
-//     status = ioread32(mdev->prefetcher + 0x10);
-//
-//     // 2. Print the message (Note: Use pr_info_ratelimited if data is fast!)
-//     pr_info(DRIVER_NAME ": IRQ triggered! Status: 0x%08x\n", status);
-//
-//     // 3. Reset the IRQ (Write 1 to clear bit 0)
-//     // We write the whole status back to clear any other sticky bits (like EOP)
-//     iowrite32(status, mdev->prefetcher + 0x10);
-//
-//     return IRQ_HANDLED;
+// static struct msgdma_dev *to_mdev(struct file *file) {
+//     return container_of(file->private_data, struct msgdma_dev, miscdev);
 // }
+
+static irqreturn_t msgdma_irq_handler(int irq, void *dev_id)
+{
+    struct msgdma_dev *mdev = dev_id;
+    u32 status;
+
+    // 1. Read status to see what happened
+    status = ioread32(mdev->prefetcher + 0x10);
+
+    // 2. Print the message (Note: Use pr_info_ratelimited if data is fast!)
+    pr_info(DRIVER_NAME ": IRQ triggered! Status: 0x%08x\n", status);
+
+    mdev->data_ready = 1;
+    wake_up_interruptible(&mdev->wait_queue);
+    // 3. Reset the IRQ (Write 1 to clear bit 0)
+    // We write the whole status back to clear any other sticky bits (like EOP)
+    iowrite32(status, mdev->prefetcher + 0x10);
+
+    return IRQ_HANDLED;
+}
 
 static int msgdma_mmap(struct file *file, struct vm_area_struct *vma)
 {
     struct miscdevice *mptr = file->private_data;
     struct msgdma_dev *mdev = container_of(mptr, struct msgdma_dev, miscdev);
+    
+    // Use the page offset directly to avoid confusion
+    unsigned long pgoff = vma->vm_pgoff;
 
-    // vma->vm_page_prot should be set for non-cached access by dma_mmap_coherent
-    return dma_mmap_coherent(mdev->dev, vma, 
-                             mdev->buffer_virt, 
-                             mdev->buffer_phys, 
-                             mdev->buffer_size);
+    if (pgoff == 0) {
+        return dma_mmap_coherent(mdev->dev, vma, 
+                                 mdev->buffer_virt, mdev->buffer_phys, 
+                                 mdev->buffer_size);
+    } else if (pgoff == 1) { // 1 page offset = 0x1000 bytes
+        // Important: We must clear the offset in the VA so the mapping 
+        // starts at the beginning of the descriptor memory
+        vma->vm_pgoff = 0; 
+        return dma_mmap_coherent(mdev->dev, vma, 
+                                 mdev->desc_virt, mdev->desc_phys, 
+                                 PAGE_SIZE);
+    }
+
+    return -ENXIO; // This is the 'No such device or address' error
+}
+
+static ssize_t msgdma_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+{
+    struct miscdevice *mptr = file->private_data;
+    struct msgdma_dev *mdev = container_of(mptr, struct msgdma_dev, miscdev);
+
+    // This line blocks the process until data_ready is true
+    if (wait_event_interruptible(mdev->wait_queue, mdev->data_ready != 0))
+        return -ERESTARTSYS;
+
+    mdev->data_ready = 0; // Reset for next time
+    return 0; // Return 0 to Rust (success)
 }
 
 static const struct file_operations msgdma_fops = {
     .owner          = THIS_MODULE,
     .mmap           = msgdma_mmap,
     .open           = nonseekable_open,
+    .read           = msgdma_read,
 };
 
 static int msgdma_probe(struct platform_device *pdev)
@@ -107,6 +143,44 @@ static int msgdma_probe(struct platform_device *pdev)
     if (!res) return -EINVAL;
     mdev->prefetcher = devm_ioremap(&pdev->dev, res->start, resource_size(res));
     if (!mdev->prefetcher) return -ENOMEM;
+
+
+
+
+    int irq;
+    irq = platform_get_irq(pdev, 0);
+    if (irq < 0) {
+        dev_err(&pdev->dev, "Failed to get IRQ from DT\n");
+        return irq;
+    }
+
+    // 2. Request the IRQ
+    // We pass 'mdev' as the dev_id so the handler can access the CSR base
+    ret = devm_request_irq(&pdev->dev, irq, msgdma_irq_handler, 
+                           0, DRIVER_NAME, mdev);
+    if (ret) {
+        dev_err(&pdev->dev, "Failed to request IRQ %d\n", irq);
+        return ret;
+    }
+
+    // irq wait queue
+    init_waitqueue_head(&mdev->wait_queue);
+    mdev->data_ready = 0;
+
+
+
+    // iowrite32(2, mdev->prefetcher + 0x00); // reset dma engine
+    // Wait a moment for irq
+    msleep(10);
+
+
+
+
+
+
+
+
+
 
     // 3. Setup DMA
     ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
@@ -139,11 +213,7 @@ static int msgdma_probe(struct platform_device *pdev)
     dev_info(&pdev->dev, "Buffer Virt: %px, Phys: %pad\n", mdev->buffer_virt, &mdev->buffer_phys);
 
 
-    struct msgdma_desc *desc;
-    dma_addr_t desc_phys;
-    u32 status;
-
-    iowrite32(0x08, mdev->csr + 0x04); // stop on early termination // TODO remove?
+    // iowrite32(0x08, mdev->csr + 0x04); // stop on early termination // TODO remove?
     // if (mdev->csr) iowrite32(0x02, mdev->csr + 0x04);
 
     // 1. Clear the target RAM so we can see the counter appear
@@ -151,29 +221,36 @@ static int msgdma_probe(struct platform_device *pdev)
 
     // 2. Allocate a small piece of coherent memory for the descriptor itself
     // The prefetcher needs to read this descriptor from RAM
-    desc = dma_alloc_coherent(&pdev->dev, sizeof(*desc), &desc_phys, GFP_KERNEL);
-    if (!desc) return -ENOMEM;
+    mdev->desc_virt = dma_alloc_coherent(&pdev->dev, PAGE_SIZE, &mdev->desc_phys, GFP_KERNEL);
+    if (!mdev->desc_virt) return -ENOMEM;
 
-    // 3. Fill the descriptor
-    desc->write_addr = mdev->buffer_phys;  // 0x38000000
-    desc->length     = 192;
-    desc->control    = (1 << 30) | (1 << 14) | (1 << 12); // owned_by_hw, transfer complete IRQ, end on eop
+    // 2. Clear the memory
+    memset(mdev->desc_virt, 0, PAGE_SIZE);
 
-    dev_info(&pdev->dev, "Submitting descriptor at phys %pad\n", &desc_phys);
+    // 3. Fill the descriptor using the struct pointer
+    mdev->desc_virt->write_addr = mdev->buffer_phys;
+    mdev->desc_virt->length     = 192;
+    mdev->desc_virt->next_desc  = mdev->desc_phys;
+    mdev->desc_virt->control    =  (1 << 30) | (1 << 14) | (1 << 12); 
+
+    dev_info(&pdev->dev, "Submitting descriptor at phys %pad\n", &mdev->desc_phys);
 
     // 4. Feed the Descriptor address to the Prefetcher
-    iowrite32(lower_32_bits(desc_phys), mdev->prefetcher + 0x04);
-    iowrite32(upper_32_bits(desc_phys), mdev->prefetcher + 0x08);
-    
+    iowrite32(lower_32_bits(mdev->desc_phys), mdev->prefetcher + 0x04);
+    iowrite32(upper_32_bits(mdev->desc_phys), mdev->prefetcher + 0x08);
+    iowrite32(200, mdev->prefetcher + 0x0C); // poll freq
     // 5. Start the Prefetcher (Writing 1 to Control/Status reg at 0x00)
-    iowrite32(START_BIT, mdev->prefetcher + 0x00);
+
+    // iowrite32(0x09, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
+    iowrite32(0x0b, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
 
     // 6. Wait a moment for FPGA to stream data
     msleep(10);
 
-    iowrite32(0x01, mdev->prefetcher + 0x10); // clear IRQ // TODO remove later, must be done from somewhere else
+    // iowrite32(0x01, mdev->prefetcher + 0x10); // clear IRQ // TODO remove later, must be done from somewhere else
 
     // 7. Check Status
+    u32 status;
     status = ioread32(mdev->csr + 0x00); // Dispatcher Status
     dev_info(&pdev->dev, "mSGDMA Status: 0x%08x\n", status);
 
@@ -187,7 +264,7 @@ static int msgdma_probe(struct platform_device *pdev)
     }
 
     // Cleanup descriptor (it has been read into FPGA internal FIFO now)
-    dma_free_coherent(&pdev->dev, sizeof(*desc), desc, desc_phys);
+    // dma_free_coherent(&pdev->dev, sizeof(*desc), desc, desc_phys);
 
     // 4. Basic Reset
     // iowrite32(0x02, mdev->csr + 0x04);
@@ -205,11 +282,22 @@ static void msgdma_remove(struct platform_device *pdev) {
     // 1. Stop the mSGDMA Dispatcher (Reset it)
     if (mdev->csr) iowrite32(0x02, mdev->csr + 0x04);
 
-    // 2. Free the Descriptor memory
-    if (mdev->desc_virt) { dma_free_coherent(&pdev->dev, sizeof(struct msgdma_desc), mdev->desc_virt, mdev->desc_phys); }
+    // // 2. Free the Descriptor memory
+    // if (mdev->desc_virt) { dma_free_coherent(&pdev->dev, sizeof(struct msgdma_desc), mdev->desc_virt, mdev->desc_phys); }
+    //
+    // // 3. Free the Data Buffer (the 0x38000000 one)
+    // if (mdev->buffer_virt) { dma_free_coherent(&pdev->dev, mdev->buffer_size, mdev->buffer_virt, mdev->buffer_phys); }
 
-    // 3. Free the Data Buffer (the 0x38000000 one)
+
+
+    // 3. Free the Descriptor Memory
+    if (mdev->desc_virt) { dma_free_coherent(&pdev->dev, PAGE_SIZE, mdev->desc_virt, mdev->desc_phys); }
+
+    // 4. Free the Data Buffer
     if (mdev->buffer_virt) { dma_free_coherent(&pdev->dev, mdev->buffer_size, mdev->buffer_virt, mdev->buffer_phys); }
+
+
+
 
     // 4. Release the reserved memory handle
     of_reserved_mem_device_release(&pdev->dev);
