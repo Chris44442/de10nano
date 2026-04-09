@@ -64,12 +64,25 @@ architecture rtl of top is
   signal s2_adr : std_logic_vector(7 downto 0) := (others => '0');
   signal s2_wr_dat : std_logic_vector(31 downto 0) := (others => '0');
   signal s2_wr_en : std_logic := '0';
-  signal msgdma_0_st_sink_data : std_logic_vector(63 downto 0) := (others => '0');
   signal cnt2 : unsigned(63 downto 0) := 64x"7";
+  signal msgdma_0_st_sink_data : std_logic_vector(63 downto 0) := (others => '0');
   signal msgdma_0_st_sink_ready : std_logic := '0';
   signal msgdma_0_st_sink_valid : std_logic := '0';
+  signal msgdma_0_st_sink_startofpacket  : std_logic                     := '0';
+  signal msgdma_0_st_sink_endofpacket    : std_logic                     := '0';
+  signal msgdma_0_st_sink_empty          : std_logic_vector(2 downto 0)  := (others => '0');
 
   signal startup_enable : std_logic := '0';
+
+signal state       : integer range 0 to 2 := 0; -- 0: Header, 1: Payload, 2: Footer
+signal word_cnt    : unsigned(7 downto 0) := (others => '0');
+signal payload_max : unsigned(7 downto 0) := to_unsigned(8, 8); -- Default for 80-byte msg
+signal len_select  : integer range 0 to 2 := 0;
+signal data_cnt    : unsigned(64 downto 1) := to_unsigned(1, 64);
+
+-- Constants for your Magic Numbers
+constant HEADER_VAL : std_logic_vector(63 downto 0) := x"affe7788babecafe";
+constant FOOTER_VAL : std_logic_vector(63 downto 0) := x"deadface00c0ffee";
 			-- msgdma_0_st_sink_data           => msgdma_0_st_sink_data,
 			-- msgdma_0_st_sink_valid          => msgdma_0_st_sink_valid,
 			-- msgdma_0_st_sink_ready          => msgdma_0_st_sink_ready
@@ -152,7 +165,10 @@ component soc is port (
 
 			msgdma_0_st_sink_data           : in    std_logic_vector(63 downto 0) := (others => 'X'); -- data
 			msgdma_0_st_sink_valid          : in    std_logic                     := 'X';             -- valid
-			msgdma_0_st_sink_ready          : out   std_logic                                         -- ready
+			msgdma_0_st_sink_ready          : out   std_logic;                                         -- ready
+			msgdma_0_st_sink_startofpacket  : in    std_logic                     := 'X';             -- startofpacket
+			msgdma_0_st_sink_endofpacket    : in    std_logic                     := 'X';             -- endofpacket
+			msgdma_0_st_sink_empty          : in    std_logic_vector(2 downto 0)  := (others => 'X') -- empty
 );
 end component soc;
 
@@ -235,34 +251,73 @@ soc_0 : soc port map (
 
 			msgdma_0_st_sink_data           => msgdma_0_st_sink_data,
 			msgdma_0_st_sink_valid          => msgdma_0_st_sink_valid,
-			msgdma_0_st_sink_ready          => msgdma_0_st_sink_ready
+			msgdma_0_st_sink_ready          => msgdma_0_st_sink_ready,
+			msgdma_0_st_sink_startofpacket  => msgdma_0_st_sink_startofpacket,  --                 .startofpacket
+			msgdma_0_st_sink_endofpacket    => msgdma_0_st_sink_endofpacket,    --                 .endofpacket
+			msgdma_0_st_sink_empty          => msgdma_0_st_sink_empty          --                 .empty
 );
 
-process(FPGA_CLK1_50) begin
-  if rising_edge(FPGA_CLK1_50) then
-    cnt <= cnt + 1;
-
-    if cnt(24) then
-      startup_enable <= '1';
-    end if;
-    if startup_enable then
-      msgdma_0_st_sink_valid <= '1';
-    else
+process(FPGA_CLK1_50)
+begin
+    if rising_edge(FPGA_CLK1_50) then
       msgdma_0_st_sink_valid <= '0';
-    end if;
+      msgdma_0_st_sink_endofpacket <= '0';
+      msgdma_0_st_sink_startofpacket <= '0';
+      cnt <= cnt + 1;
+      if cnt(24) then
+        startup_enable <= '1';
+      end if;
 
-    -- Data and Counter logic: 
-    -- ONLY increment when a transfer actually occurs
-    if (msgdma_0_st_sink_ready = '1' and msgdma_0_st_sink_valid = '1') then
-        cnt2 <= cnt2 + 1;
-        -- The line below ensures the NEXT data is ready for the NEXT handshake
-        msgdma_0_st_sink_data <= std_logic_vector(cnt2 + 1);
-    elsif (msgdma_0_st_sink_valid = '0') then
-        -- Initial value before first transfer
-        msgdma_0_st_sink_data <= std_logic_vector(cnt2);
-    end if;
+        if msgdma_0_st_sink_ready = '1' and startup_enable = '1' then
+            
+            case state is
+                when 0 => -- HEADER (SOP)
+                    msgdma_0_st_sink_data <= HEADER_VAL;
+                    msgdma_0_st_sink_startofpacket <= '1';
+                    msgdma_0_st_sink_endofpacket   <= '0';
+                    
+                    word_cnt <= to_unsigned(1, 8);
+                    state    <= 1;
 
-  end if;
+                when 1 => -- PAYLOAD (Counter)
+                    msgdma_0_st_sink_data <= std_logic_vector(data_cnt);
+                    msgdma_0_st_sink_startofpacket <= '0';
+                    msgdma_0_st_sink_endofpacket   <= '0';
+                    
+                    data_cnt <= data_cnt + 1;
+                    word_cnt <= word_cnt + 1;
+                    
+                    -- Check if we've reached the end of payload
+                    -- (Total length - 2 words for header/footer)
+                    if (word_cnt = payload_max) then
+                        state <= 2;
+                    end if;
+
+                when 2 => -- FOOTER (EOP)
+                    msgdma_0_st_sink_data <= FOOTER_VAL;
+                    msgdma_0_st_sink_startofpacket <= '0';
+                    msgdma_0_st_sink_endofpacket   <= '1';
+                    
+                    -- Reset data counter for next message (or keep it running, your choice)
+                    data_cnt <= to_unsigned(1, 64);
+                    
+                    -- Cycle through lengths: 80 (10 words), 120 (15 words), 160 (20 words)
+                    -- payload_max = total_words - 2 (header and footer)
+                    if len_select = 0 then
+                        payload_max <= to_unsigned(13, 8); -- Setup for 120 bytes (15 words total)
+                        len_select  <= 1;
+                    elsif len_select = 1 then
+                        payload_max <= to_unsigned(18, 8); -- Setup for 160 bytes (20 words total)
+                        len_select  <= 2;
+                    else
+                        payload_max <= to_unsigned(8, 8);  -- Setup for 80 bytes (10 words total)
+                        len_select  <= 0;
+                    end if;
+                    
+                    state <= 0; -- Loop back to header
+            end case;
+        end if;
+    end if;
 end process;
 
 LED(7) <= cnt(24) and cnt(10) and cnt(9);
