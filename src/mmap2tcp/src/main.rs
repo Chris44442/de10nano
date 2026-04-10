@@ -49,6 +49,8 @@ struct MsgdmaStandardDesc {
     control: u32,
 }
 
+use nix::poll::{poll, PollFd, PollFlags};
+use std::os::unix::io::{AsRawFd, BorrowedFd};
 
 fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
     stream.set_nodelay(true)?; 
@@ -58,21 +60,33 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
 
     let data_mmap = unsafe { MmapOptions::new().offset(0x0000).len(0x2000).map(&f)? };
 
-    println!("Mmap for Descriptor and Data Buffer done");
-    println!("Waiting for first IRQ");
+    println!("Hardware is set up, waiting for IRQ ...");
 
     let mut dummy = [0u8; 1];
     let mut tail = 0; // CPU's current position in the ring
 
+    // Prepare for polling the file descriptor
+    let poll_fd = PollFd::new( unsafe { BorrowedFd::borrow_raw(f.as_raw_fd()) }, PollFlags::POLLIN);
+
     loop {
-        f.read(&mut dummy)?; // Wait for IRQ
+        // 5000ms timeout. If FPGA hangs, we don't deadlock.
+        match poll(&mut [poll_fd.clone()], 5000 as u16) {
+            Ok(n) if n > 0 => {
+                f.read(&mut dummy)?; // IRQ received, clear the wait queue signal
+            }
+            Ok(_) => {
+                println!("Timeout: No IRQ from FPGA for 5 seconds");
+                return Ok(());
+            }
+            Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+        }
 
         loop {
             let desc_array: *mut MsgdmaStandardDesc = first_desc_ptr as *mut MsgdmaStandardDesc;
             let desc = unsafe { &mut *desc_array.add(tail) };
-            let ctrl = unsafe { read_volatile(&desc.control) };
+            let desc_control = unsafe { read_volatile(&desc.control) };
 
-            if (ctrl & (1 << 30)) == 0 {
+            if (desc_control & (1 << 30)) == 0 {
                 // Actual bytes transferred is at Word 4 (0x10)
                 let actual_len = unsafe { read_volatile(&desc.actual_len) } as usize;
                 if actual_len > SLOT_SIZE {
@@ -97,7 +111,7 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
                 // }
 
                 // Set OWN_BY_HW (bit 30) back to 1
-                unsafe { write_volatile(&mut desc.control, ctrl | (1 << 30)); }
+                unsafe { write_volatile(&mut desc.control, desc_control | (1 << 30)); }
 
                 tail = (tail + 1) % 8;
                 sleep(Duration::from_millis(1000));
