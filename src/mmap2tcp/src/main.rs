@@ -37,6 +37,19 @@ fn run_server() -> std::io::Result<()> {
 const DEV_MSGDMA_PATH: &str = "/dev/msgdma_test";
 const SLOT_SIZE : usize = 1024;
 
+#[repr(C)]
+struct MsgdmaStandardDesc {
+    read_addr: u32,
+    write_addr: u32,
+    length: u32,
+    next_desc: u32,
+    actual_len: u32,
+    status: u32,
+    reserved: u32,
+    control: u32,
+}
+
+
 fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
     stream.set_nodelay(true)?; 
     let mut f = OpenOptions::new().read(true).write(true).open(DEV_MSGDMA_PATH)?;
@@ -55,36 +68,42 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
         f.read(&mut dummy)?; // Wait for IRQ
 
         loop {
-            let current_desc_ptr = unsafe { first_desc_ptr.add(tail * 8) };
-            let ctrl_ptr = unsafe { current_desc_ptr.add(7) };
-
-            let ctrl = unsafe { read_volatile(ctrl_ptr) };
+            let desc_array: *mut MsgdmaStandardDesc = first_desc_ptr as *mut MsgdmaStandardDesc;
+            let desc = unsafe { &mut *desc_array.add(tail) };
+            let ctrl = unsafe { read_volatile(&desc.control) };
 
             if (ctrl & (1 << 30)) == 0 {
                 // Actual bytes transferred is at Word 4 (0x10)
-                let actual_len = unsafe { read_volatile(current_desc_ptr.add(4)) } as usize;
+                let actual_len = unsafe { read_volatile(&desc.actual_len) } as usize;
+                if actual_len > SLOT_SIZE {
+                    println!("Error: Hardware reported invalid length {}", actual_len);
+                    break;
+                }
 
                 // Get the slice for this slot
                 let start = tail * SLOT_SIZE;
                 let data_slice = &data_mmap[start .. start + actual_len];
 
-                println!("Slot {}: Received {} bytes", tail, actual_len);
-                stream.write_all(data_slice)?;
-
-                // Print as 64-bit Hex Words
-                for (i, chunk) in data_slice.chunks_exact(8).enumerate() {
-                    let word = u64::from_be_bytes(chunk.try_into().unwrap());
-                    println!("  [{:03}] 0x{:016x}", i, word);
+                // println!("Slot {}: Received {} bytes", tail, actual_len);
+                if let Err(e) = stream.write_all(data_slice) {
+                    println!("TCP client disconnected: {}", e);
+                    return Err(e);
                 }
 
-                // Reset: Set OWN_BY_HW (bit 30) back to 1
-                unsafe { write_volatile(ctrl_ptr, ctrl | (1 << 30)); }
+                // Print as 64-bit Hex Words
+                // for (i, chunk) in data_slice.chunks_exact(8).enumerate() {
+                //     let word = u64::from_be_bytes(chunk.try_into().unwrap());
+                //     println!("  [{:03}] 0x{:016x}", i, word);
+                // }
+
+                // Set OWN_BY_HW (bit 30) back to 1
+                unsafe { write_volatile(&mut desc.control, ctrl | (1 << 30)); }
 
                 tail = (tail + 1) % 8;
                 sleep(Duration::from_millis(1000));
 
             } else {
-                break; // Catch up complete
+                break;
             }
         }
     }

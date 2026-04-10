@@ -112,11 +112,104 @@ static ssize_t msgdma_read(struct file *file, char __user *buf, size_t count, lo
     return 0; // Return 0 to Rust (success)
 }
 
+static int msgdma_reset_prefetcher(struct msgdma_dev *mdev) {
+    u32 ctrl;
+    int timeout = 1000;
+
+    ctrl = ioread32(mdev->prefetcher + 0x00);
+    iowrite32(ctrl | (1 << 2), mdev->prefetcher + 0x00);
+
+    while (timeout > 0) {
+        ctrl = ioread32(mdev->prefetcher + 0x00);
+        if (!(ctrl & (1 << 2))) {
+            return 0;
+        }
+        udelay(1);
+        timeout--;
+    }
+    pr_err(DRIVER_NAME ": Prefetcher reset timed out!\n");
+    return -ETIMEDOUT;
+}
+
+static int msgdma_reset_dispatcher(struct msgdma_dev *mdev) {
+    u32 ctrl;
+    u32 stat;
+    int timeout = 1000;
+
+    ctrl = ioread32(mdev->csr + 0x04);
+    iowrite32(ctrl | (1 << 1), mdev->csr + 0x04);
+
+    while (timeout > 0) {
+        stat = ioread32(mdev->csr + 0x00);
+        if (!(stat & (1 << 6))) {
+            return 0;
+        }
+        udelay(1);
+        timeout--;
+    }
+    pr_err(DRIVER_NAME ": Dispatcher reset timed out!\n");
+    return -ETIMEDOUT;
+}
+
+static int msgdma_open(struct inode *inode, struct file *file)
+{
+    struct miscdevice *mptr = file->private_data;
+    struct msgdma_dev *mdev = container_of(mptr, struct msgdma_dev, miscdev);
+
+//  Resetting Prefetcher Core Flow
+// The following is the recommended flow for software to stop the mSGDMA when it is in
+// the middle of operation.
+// 1. Write 1 to the Prefetcher control register bit 2 (Reset_Prefetcher bit set to 1).
+// 2. Poll for control register bit 2 to be 0 (Reset_Prefetcher bit cleared by hardware).
+// 3. Trigger software reset condition in the dispatcher core.
+// 4. Poll for software reset condition in the dispatcher core to be completed by reading
+// the dispatcher core status register.
+// 5.
+//  The whole reset flow has completed, software can reconfigure the mSGDMA.
+
+// if (msgdma_reset_prefetcher(mdev)) {
+//     return -EIO; 
+// }
+
+    if (msgdma_reset_prefetcher(mdev)) {return -EIO;}
+    if (msgdma_reset_dispatcher(mdev)) {return -EIO;}
+
+    // 2. Clear the Wait Queue and Flags
+    mdev->data_ready = 0;
+
+    int i;
+    size_t desc_size = sizeof(struct msgdma_desc);
+    u32 slot_size = 1024; // Assuming 1KB per message slot in your 4KB buffer
+    u32 max_msg_bytes = 180*4; // 720 bytes (The most the FPGA will send)
+    // 3. Re-initialize the Descriptor Ring to default state
+    for (i = 0; i < 8; i++) {
+        struct msgdma_desc *d = &mdev->desc_virt[i];
+        d->write_addr = mdev->buffer_phys + (i * slot_size);
+        d->length = max_msg_bytes;
+        if (i == 7) {
+            d->next_desc = mdev->desc_phys; // If it's the last one, link back to the start
+        } else {
+            d->next_desc = mdev->desc_phys + ((i + 1) * desc_size);
+        }
+        d->control = (1 << 30) | (1 << 14) | (1 << 12);
+    }
+
+    // 4. Restart the Prefetcher from Descriptor 0
+    iowrite32(lower_32_bits(mdev->desc_phys), mdev->prefetcher + 0x04);
+    iowrite32(upper_32_bits(mdev->desc_phys), mdev->prefetcher + 0x08);
+    iowrite32(200, mdev->prefetcher + 0x0C); // 200 clk cycles poll freq
+    iowrite32(0x0b, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
+
+    pr_info(DRIVER_NAME ": Device opened, mSGDMA reset to Slot 0\n");
+    return nonseekable_open(inode, file);
+}
+
+// Update your fops
 static const struct file_operations msgdma_fops = {
-    .owner          = THIS_MODULE,
-    .mmap           = msgdma_mmap,
-    .open           = nonseekable_open,
-    .read           = msgdma_read,
+    .owner = THIS_MODULE,
+    .open  = msgdma_open, // Use our new reset-on-open function
+    .mmap  = msgdma_mmap,
+    .read  = msgdma_read,
 };
 
 static int msgdma_probe(struct platform_device *pdev)
