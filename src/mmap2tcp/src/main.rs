@@ -65,41 +65,56 @@ use std::thread::sleep;
 use std::time::Duration;
 use memmap2::MmapOptions;
 
+const SLOT_SIZE : usize = 1024;
+
 fn main() -> Result<()> {
     let mut f = OpenOptions::new().read(true).write(true).open("/dev/msgdma_test")?;
-    let desc_mmap = unsafe { MmapOptions::new().offset(0x1000).len(0x1000).map_mut(&f)? };
-    let desc_ptr = desc_mmap.as_ptr() as *mut u32;
-    let actual_buf_len_ptr = unsafe { desc_ptr.add(4) };
-    let control_ptr = unsafe { desc_ptr.add(7) };
+    let desc_mmap = unsafe { MmapOptions::new().offset(0x2000).len(0x1000).map_mut(&f)? };
+    let first_desc_ptr = desc_mmap.as_ptr() as *mut u32;
 
-    println!("Starting Interrupt + Park Mode loop...");
+    let data_mmap = unsafe { MmapOptions::new().offset(0x0000).len(0x2000).map(&f)? };
+
+    println!("Mmap for Descriptor and Data Buffer done");
+    println!("Waiting for first IRQ");
+
+    let mut dummy = [0u8; 1];
+    let mut tail = 0; // CPU's current position in the ring
 
     loop {
-        // --- STEP 1: Wait for IRQ ---
-        // This blocks until the driver calls wake_up
-        let mut dummy = [0u8; 1];
-        f.read(&mut dummy)?; 
+        f.read(&mut dummy)?; // Wait for IRQ
 
-        // --- STEP 2: Handle Data ---
-        println!("Hello World! IRQ detected.");
+        loop {
+            let current_desc_ptr = unsafe { first_desc_ptr.add(tail * 8) };
+            let ctrl_ptr = unsafe { current_desc_ptr.add(7) };
+            
+            let ctrl = unsafe { read_volatile(ctrl_ptr) };
 
-        let actual_buf_len  = unsafe {read_volatile(actual_buf_len_ptr)};
-        println!("actual buf len: {:?}", actual_buf_len);
+            if (ctrl & (1 << 30)) == 0 {
+                // Actual bytes transferred is at Word 4 (0x10)
+                let actual_len = unsafe { read_volatile(current_desc_ptr.add(4)) } as usize;
+                
+                // Get the slice for this slot
+                let start = tail * SLOT_SIZE;
+                let data_slice = &data_mmap[start .. start + actual_len];
 
-        // --- STEP 3: Reset Owned by HW bit ---
-        // Read current, set bit 31 (OWN_BY_HW), and write back
-        unsafe {
-            let mut ctrl = read_volatile(control_ptr);
-            println!("ctrl before setting own_by_hw: 0x{:x?}", ctrl);
-            ctrl |= (1 << 30) | (1 << 31); // Set OWN_BY_HW
-            write_volatile(control_ptr, ctrl);
-            let ctrl = read_volatile(control_ptr);
-            println!("ctrl after: 0x{:x?}", ctrl);
+                println!("Slot {}: Received {} bytes", tail, actual_len);
+
+                // Print as 64-bit Hex Words
+                for (i, chunk) in data_slice.chunks_exact(8).enumerate() {
+                    let word = u64::from_be_bytes(chunk.try_into().unwrap());
+                    println!("  [{:03}] 0x{:016x}", i, word);
+                }
+
+                // Reset: Set OWN_BY_HW (bit 30) back to 1
+                unsafe { write_volatile(ctrl_ptr, ctrl | (1 << 30)); }
+
+                tail = (tail + 1) % 8;
+                sleep(Duration::from_millis(1000));
+
+            } else {
+                break; // Catch up complete
+            }
         }
-
-        println!("Bit reset. Sleeping 500ms...");
-        
-        // --- STEP 4: Slow it down ---
-        sleep(Duration::from_millis(500));
     }
 }
+
