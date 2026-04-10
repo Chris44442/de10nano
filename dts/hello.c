@@ -87,7 +87,7 @@ static int msgdma_mmap(struct file *file, struct vm_area_struct *vma)
         return dma_mmap_coherent(mdev->dev, vma, 
                                  mdev->buffer_virt, mdev->buffer_phys, 
                                  mdev->buffer_size);
-    } else if (pgoff == 1) { // 1 page offset = 0x1000 bytes
+    } else if (pgoff == 2) { // 1 page offset = 0x1000 bytes
         // Important: We must clear the offset in the VA so the mapping 
         // starts at the beginning of the descriptor memory
         vma->vm_pgoff = 0; 
@@ -188,7 +188,8 @@ static int msgdma_probe(struct platform_device *pdev)
     ret = of_reserved_mem_device_init(&pdev->dev);
     if (ret) return ret;
 
-    mdev->buffer_size = 0x1000;
+    // 8 slots of 1024 bytes each = 8KB
+    mdev->buffer_size = 8*1024;
     mdev->buffer_virt = dma_alloc_coherent(&pdev->dev, mdev->buffer_size, &mdev->buffer_phys, GFP_KERNEL);
     if (!mdev->buffer_virt) {
         of_reserved_mem_device_release(&pdev->dev);
@@ -221,18 +222,58 @@ static int msgdma_probe(struct platform_device *pdev)
 
     // 2. Allocate a small piece of coherent memory for the descriptor itself
     // The prefetcher needs to read this descriptor from RAM
+    // mdev->desc_virt = dma_alloc_coherent(&pdev->dev, PAGE_SIZE, &mdev->desc_phys, GFP_KERNEL);
+    // if (!mdev->desc_virt) return -ENOMEM;
+    //
+    // // 2. Clear the memory
+    // memset(mdev->desc_virt, 0, PAGE_SIZE);
+    //
+    // // 3. Fill the descriptor using the struct pointer
+    // mdev->desc_virt->write_addr = mdev->buffer_phys;
+    // mdev->desc_virt->length     = 192;
+    // mdev->desc_virt->next_desc  = 0;
+    // mdev->desc_virt->control    =  (1 << 30) | (1 << 14) | (1 << 12); 
+
+
+
+
+    int i;
+    size_t desc_size = sizeof(struct msgdma_desc);
+    u32 slot_size = 1024; // Assuming 1KB per message slot in your 4KB buffer
+    u32 max_msg_bytes = 180*4; // 720 bytes (The most the FPGA will send)
+
     mdev->desc_virt = dma_alloc_coherent(&pdev->dev, PAGE_SIZE, &mdev->desc_phys, GFP_KERNEL);
     if (!mdev->desc_virt) return -ENOMEM;
-
-    // 2. Clear the memory
     memset(mdev->desc_virt, 0, PAGE_SIZE);
 
-    // 3. Fill the descriptor using the struct pointer
-    mdev->desc_virt->write_addr = mdev->buffer_phys;
-    mdev->desc_virt->length     = 192;
-    mdev->desc_virt->next_desc  = mdev->desc_phys;
-    mdev->desc_virt->control    =  (1 << 30) | (1 << 14) | (1 << 12); 
+    for (i = 0; i < 8; i++) {
+        struct msgdma_desc *d = &mdev->desc_virt[i];
+        d->write_addr = mdev->buffer_phys + (i * slot_size);
+        d->length = max_msg_bytes;
+        if (i == 7) {
+            d->next_desc = mdev->desc_phys; // If it's the last one, link back to the start
+        } else {
+            d->next_desc = mdev->desc_phys + ((i + 1) * desc_size);
+        }
+        d->control = (1 << 30) | (1 << 14) | (1 << 12);
+    }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    msleep(10);
     dev_info(&pdev->dev, "Submitting descriptor at phys %pad\n", &mdev->desc_phys);
 
     // 4. Feed the Descriptor address to the Prefetcher
@@ -243,6 +284,7 @@ static int msgdma_probe(struct platform_device *pdev)
 
     // iowrite32(0x09, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
     iowrite32(0x0b, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
+    // iowrite32(0x1b, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
 
     // 6. Wait a moment for FPGA to stream data
     msleep(10);
