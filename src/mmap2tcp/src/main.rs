@@ -68,6 +68,8 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
     // Prepare for polling the file descriptor
     let poll_fd = PollFd::new( unsafe { BorrowedFd::borrow_raw(f.as_raw_fd()) }, PollFlags::POLLIN);
 
+    let desc_array: *mut MsgdmaStandardDesc = first_desc_ptr as *mut MsgdmaStandardDesc;
+
     loop {
         // 5000ms timeout. If FPGA hangs, we don't deadlock.
         match poll(&mut [poll_fd.clone()], 5000 as u16) {
@@ -81,12 +83,18 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
             Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
         }
 
+        // let mut aux = 0;
         loop {
-            let desc_array: *mut MsgdmaStandardDesc = first_desc_ptr as *mut MsgdmaStandardDesc;
             let desc = unsafe { &mut *desc_array.add(tail) };
             let desc_control = unsafe { read_volatile(&desc.control) };
 
             if (desc_control & (1 << 30)) == 0 {
+
+                // aux += 1;
+                // if aux > 1000 {
+                //     println!("alarm");
+                // }
+
                 // Actual bytes transferred is at Word 4 (0x10)
                 let actual_len = unsafe { read_volatile(&desc.actual_len) } as usize;
                 if actual_len > SLOT_SIZE {
@@ -114,12 +122,12 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
                 unsafe { write_volatile(&mut desc.control, desc_control | (1 << 30)); }
 
                 tail = (tail + 1) % 8;
-                sleep(Duration::from_millis(1000));
 
             } else {
                 break;
             }
         }
+        sleep(Duration::from_millis(1000));
     }
 }
 
