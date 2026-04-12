@@ -52,13 +52,18 @@ struct MsgdmaStandardDesc {
 use nix::poll::{poll, PollFd, PollFlags};
 use std::os::unix::io::{AsRawFd, BorrowedFd};
 
+// use std::hint::black_box;
+//
+// use std::sync::mpsc;
+// use std::thread;
+
 fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
     stream.set_nodelay(true)?; 
     let mut f = OpenOptions::new().read(true).write(true).open(DEV_MSGDMA_PATH)?;
-    let desc_mmap = unsafe { MmapOptions::new().offset(0x2000).len(0x1000).map_mut(&f)? };
+    let desc_mmap = unsafe { MmapOptions::new().offset(0x10000).len(0x1000).map_mut(&f)? };
     let first_desc_ptr = desc_mmap.as_ptr() as *mut u32;
 
-    let data_mmap = unsafe { MmapOptions::new().offset(0x0000).len(0x2000).map(&f)? };
+    let data_mmap = unsafe { MmapOptions::new().offset(0x0).len(0x10000).map(&f)? };
 
     println!("Hardware is set up, waiting for IRQ ...");
 
@@ -70,6 +75,11 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
 
     let desc_array: *mut MsgdmaStandardDesc = first_desc_ptr as *mut MsgdmaStandardDesc;
 
+    let mut batch = Vec::new(); // Temporary storage for slices
+    let mut processed_indices = Vec::new(); // Track which ones to give back
+
+    
+    let mut bluu = 0;
     loop {
         // 5000ms timeout. If FPGA hangs, we don't deadlock.
         match poll(&mut [poll_fd.clone()], 5000 as u16) {
@@ -83,51 +93,56 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
             Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
         }
 
-        // let mut aux = 0;
+        let mut bla = 0;
         loop {
             let desc = unsafe { &mut *desc_array.add(tail) };
             let desc_control = unsafe { read_volatile(&desc.control) };
-
             if (desc_control & (1 << 30)) == 0 {
-
-                // aux += 1;
-                // if aux > 1000 {
-                //     println!("alarm");
-                // }
-
-                // Actual bytes transferred is at Word 4 (0x10)
                 let actual_len = unsafe { read_volatile(&desc.actual_len) } as usize;
                 if actual_len > SLOT_SIZE {
                     println!("Error: Hardware reported invalid length {}", actual_len);
                     break;
                 }
-
-                // Get the slice for this slot
                 let start = tail * SLOT_SIZE;
-                let data_slice = &data_mmap[start .. start + actual_len];
+                batch.extend_from_slice(&data_mmap[start .. start + actual_len]);
 
-                // println!("Slot {}: Received {} bytes", tail, actual_len);
-                if let Err(e) = stream.write_all(data_slice) {
-                    println!("TCP client disconnected: {}", e);
-                    return Err(e);
+            // println!("5 seconds");
+                // abc.push(&data_mmap[start .. start + actual_len]);
+                
+                // Store index to release later
+                processed_indices.push(tail);
+                tail = (tail + 1) % 64;
+                bla += 1;
+                    // println!("nvaaath {}", bla);
+                if bla == 64 {
+                    // bluu += 1;
+                    // if bluu > 1000 {
+                        // println!("aaaalar!m");
+                        // bluu = 0;
+                    // }
+                    break;
                 }
-
-                // Print as 64-bit Hex Words
-                // for (i, chunk) in data_slice.chunks_exact(8).enumerate() {
-                //     let word = u64::from_be_bytes(chunk.try_into().unwrap());
-                //     println!("  [{:03}] 0x{:016x}", i, word);
-                // }
-
-                // Set OWN_BY_HW (bit 30) back to 1
-                unsafe { write_volatile(&mut desc.control, desc_control | (1 << 30)); }
-
-                tail = (tail + 1) % 8;
-
             } else {
                 break;
             }
         }
-        sleep(Duration::from_millis(1000));
+
+    // 2. Send stage (One big burst)
+                        // println!("alar!m");
+    if !batch.is_empty() {
+        if let Err(e) = stream.write_all(&batch) {
+            return Err(e);
+        }
+
+        // 3. Release stage (Only now do we give them back to FPGA)
+        for &idx in &processed_indices {
+            let desc = unsafe { &mut *desc_array.add(idx) };
+            let ctrl = unsafe { read_volatile(&desc.control) };
+            unsafe { write_volatile(&mut desc.control, ctrl | (1 << 30)); }
+        }
+        batch.clear();
+        processed_indices.clear();
+    }
     }
 }
 

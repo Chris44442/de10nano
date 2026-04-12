@@ -73,6 +73,7 @@ architecture rtl of top is
   signal msgdma_0_st_sink_empty          : std_logic_vector(2 downto 0)  := (others => '0');
 
   signal startup_enable : std_logic := '0';
+  signal msg_cooldown_cnt : integer range 0 to 1000000 := 0;
 
 signal state       : integer range 0 to 2 := 0; -- 0: Header, 1: Payload, 2: Footer
 signal word_cnt    : unsigned(7 downto 0) := (others => '0');
@@ -83,6 +84,18 @@ signal data_cnt    : unsigned(64 downto 1) := to_unsigned(1, 64);
 -- Constants for your Magic Numbers
 constant HEADER_VAL : std_logic_vector(63 downto 0) := x"affe7788babecafe";
 constant FOOTER_VAL : std_logic_vector(63 downto 0) := x"deadface00c0ffee";
+
+constant SYSTEM_CLK_FREQ : integer := 50000000;
+constant DATA_WIDTH : integer := 64;
+
+constant TARGET_BIT_RATE : integer := 2500000;
+constant MAX_WORDS_PER_MSG : integer := 100;
+constant MAX_BITS_PER_MSG : integer := DATA_WIDTH * MAX_WORDS_PER_MSG;
+constant MSG_FREQ : integer := TARGET_BIT_RATE / MAX_BITS_PER_MSG;
+-- constant MSG_COOLDOWN : integer := SYSTEM_CLK_FREQ / MSG_FREQ;
+-- constant MSG_COOLDOWN : integer := 125000;
+-- constant MSG_COOLDOWN : integer := 100000;
+constant MSG_COOLDOWN : integer := 20000;
 			-- msgdma_0_st_sink_data           => msgdma_0_st_sink_data,
 			-- msgdma_0_st_sink_valid          => msgdma_0_st_sink_valid,
 			-- msgdma_0_st_sink_ready          => msgdma_0_st_sink_ready
@@ -262,14 +275,15 @@ begin
     if rising_edge(FPGA_CLK1_50) then
       msgdma_0_st_sink_valid <= '0';
       cnt <= cnt + 1;
+      msg_cooldown_cnt <= msg_cooldown_cnt + 1;
       if cnt(24) then
         startup_enable <= '1';
       end if;
-      if startup_enable then
+      if startup_enable = '1' and msg_cooldown_cnt > MSG_COOLDOWN then
         msgdma_0_st_sink_valid <= '1';
       end if;
 
-        if msgdma_0_st_sink_ready = '1' and startup_enable = '1' then
+        if msgdma_0_st_sink_ready = '1' and startup_enable = '1' and msg_cooldown_cnt > MSG_COOLDOWN then
             
             case state is
                 when 0 => -- HEADER (SOP)
@@ -298,17 +312,16 @@ begin
                     msgdma_0_st_sink_data <= FOOTER_VAL;
                     msgdma_0_st_sink_startofpacket <= '0';
                     msgdma_0_st_sink_endofpacket   <= '1';
+                    msg_cooldown_cnt <= 0;
                     
-                    -- Cycle through lengths: 80 (10 words), 120 (15 words), 160 (20 words)
-                    -- payload_max = total_words - 2 (header and footer)
                     if len_select = 0 then
-                        payload_max <= to_unsigned(13, 8); -- Setup for 120 bytes (15 words total)
+                        payload_max <= to_unsigned(48, 8); -- 50 words total
                         len_select  <= 1;
                     elsif len_select = 1 then
-                        payload_max <= to_unsigned(18, 8); -- Setup for 160 bytes (20 words total)
+                        payload_max <= to_unsigned(98, 8); -- 100 words total
                         len_select  <= 2;
                     else
-                        payload_max <= to_unsigned(8, 8);  -- Setup for 80 bytes (10 words total)
+                        payload_max <= to_unsigned(78, 8);  -- 80 words total
                         len_select  <= 0;
                     end if;
                     

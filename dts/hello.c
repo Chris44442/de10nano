@@ -16,6 +16,8 @@
 #include <linux/wait.h>
 #include <linux/sched.h>
 
+#include <linux/poll.h>
+
 #define DRIVER_NAME "msgdma_platform_test"
 // The mSGDMA descriptor structure (Standard/Extended)
 struct msgdma_desc {
@@ -51,9 +53,25 @@ struct msgdma_dev {
 };
 
 
-// static struct msgdma_dev *to_mdev(struct file *file) {
-//     return container_of(file->private_data, struct msgdma_dev, miscdev);
-// }
+static struct msgdma_dev *to_mdev(struct file *file) {
+    return container_of(file->private_data, struct msgdma_dev, miscdev);
+}
+
+static __poll_t msgdma_poll(struct file *file, poll_table *wait)
+{
+    struct msgdma_dev *mdev = to_mdev(file);
+    __poll_t mask = 0;
+
+    // Register the wait queue with the poll system
+    poll_wait(file, &mdev->wait_queue, wait);
+
+    // If data is ready, set the POLLIN bit
+    if (mdev->data_ready) {
+        mask |= EPOLLIN | EPOLLRDNORM;
+    }
+
+    return mask;
+}
 
 static irqreturn_t msgdma_irq_handler(int irq, void *dev_id)
 {
@@ -87,7 +105,8 @@ static int msgdma_mmap(struct file *file, struct vm_area_struct *vma)
         return dma_mmap_coherent(mdev->dev, vma, 
                                  mdev->buffer_virt, mdev->buffer_phys, 
                                  mdev->buffer_size);
-    } else if (pgoff == 2) { // 1 page offset = 0x1000 bytes
+    // } else if (pgoff == 2) { // 1 page offset = 0x1000 bytes
+    } else if (pgoff == 16) { // 1 page offset = 0x1000 bytes
         // Important: We must clear the offset in the VA so the mapping 
         // starts at the beginning of the descriptor memory
         vma->vm_pgoff = 0; 
@@ -182,11 +201,11 @@ static int msgdma_open(struct inode *inode, struct file *file)
     u32 slot_size = 1024; // Assuming 1KB per message slot in your 4KB buffer
     u32 max_msg_bytes = 180*4; // 720 bytes (The most the FPGA will send)
     // 3. Re-initialize the Descriptor Ring to default state
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < 64; i++) {
         struct msgdma_desc *d = &mdev->desc_virt[i];
         d->write_addr = mdev->buffer_phys + (i * slot_size);
         d->length = max_msg_bytes;
-        if (i == 7) {
+        if (i == 63) {
             d->next_desc = mdev->desc_phys; // If it's the last one, link back to the start
         } else {
             d->next_desc = mdev->desc_phys + ((i + 1) * desc_size);
@@ -197,7 +216,7 @@ static int msgdma_open(struct inode *inode, struct file *file)
     // 4. Restart the Prefetcher from Descriptor 0
     iowrite32(lower_32_bits(mdev->desc_phys), mdev->prefetcher + 0x04);
     iowrite32(upper_32_bits(mdev->desc_phys), mdev->prefetcher + 0x08);
-    iowrite32(200, mdev->prefetcher + 0x0C); // 200 clk cycles poll freq
+    iowrite32(400, mdev->prefetcher + 0x0C); // 200 clk cycles poll freq
     iowrite32(0x0b, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
 
     pr_info(DRIVER_NAME ": Device opened, mSGDMA reset to Slot 0\n");
@@ -207,9 +226,10 @@ static int msgdma_open(struct inode *inode, struct file *file)
 // Update your fops
 static const struct file_operations msgdma_fops = {
     .owner = THIS_MODULE,
-    .open  = msgdma_open, // Use our new reset-on-open function
+    .open  = msgdma_open,
     .mmap  = msgdma_mmap,
     .read  = msgdma_read,
+    .poll  = msgdma_poll,
 };
 
 static int msgdma_probe(struct platform_device *pdev)
@@ -264,7 +284,7 @@ static int msgdma_probe(struct platform_device *pdev)
 
     // iowrite32(2, mdev->prefetcher + 0x00); // reset dma engine
     // Wait a moment for irq
-    msleep(10);
+    // msleep(10);
 
 
 
@@ -282,7 +302,7 @@ static int msgdma_probe(struct platform_device *pdev)
     if (ret) return ret;
 
     // 8 slots of 1024 bytes each = 8KB
-    mdev->buffer_size = 8*1024;
+    mdev->buffer_size = 64*1024;
     mdev->buffer_virt = dma_alloc_coherent(&pdev->dev, mdev->buffer_size, &mdev->buffer_phys, GFP_KERNEL);
     if (!mdev->buffer_virt) {
         of_reserved_mem_device_release(&pdev->dev);
@@ -339,11 +359,11 @@ static int msgdma_probe(struct platform_device *pdev)
     if (!mdev->desc_virt) return -ENOMEM;
     memset(mdev->desc_virt, 0, PAGE_SIZE);
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < 64; i++) {
         struct msgdma_desc *d = &mdev->desc_virt[i];
         d->write_addr = mdev->buffer_phys + (i * slot_size);
         d->length = max_msg_bytes;
-        if (i == 7) {
+        if (i == 63) {
             d->next_desc = mdev->desc_phys; // If it's the last one, link back to the start
         } else {
             d->next_desc = mdev->desc_phys + ((i + 1) * desc_size);
@@ -366,7 +386,7 @@ static int msgdma_probe(struct platform_device *pdev)
 
 
 
-    msleep(10);
+    // msleep(10);
     dev_info(&pdev->dev, "Submitting descriptor at phys %pad\n", &mdev->desc_phys);
 
     // 4. Feed the Descriptor address to the Prefetcher
@@ -376,11 +396,11 @@ static int msgdma_probe(struct platform_device *pdev)
     // 5. Start the Prefetcher (Writing 1 to Control/Status reg at 0x00)
 
     // iowrite32(0x09, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
-    iowrite32(0x0b, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
+    // iowrite32(0x0b, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
     // iowrite32(0x1b, mdev->prefetcher + 0x00);// Global Interrupt Enable Mask, Desc_poll_en, Run
 
     // 6. Wait a moment for FPGA to stream data
-    msleep(10);
+    // msleep(10);
 
     // iowrite32(0x01, mdev->prefetcher + 0x10); // clear IRQ // TODO remove later, must be done from somewhere else
 
