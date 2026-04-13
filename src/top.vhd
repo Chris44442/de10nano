@@ -85,19 +85,19 @@ signal data_cnt    : unsigned(64 downto 1) := to_unsigned(1, 64);
 constant HEADER_VAL : std_logic_vector(63 downto 0) := x"affe7788babecafe";
 constant FOOTER_VAL : std_logic_vector(63 downto 0) := x"deadface00c0ffee";
 
-constant SYSTEM_CLK_FREQ : integer := 50000000;
+constant SYSTEM_CLK_FREQ : integer := 50_000_000;
 constant DATA_WIDTH : integer := 64;
 
-constant TARGET_BIT_RATE : integer := 2500000;
+constant TARGET_BIT_RATE : integer := 2_500_000;
 constant MAX_WORDS_PER_MSG : integer := 100;
 constant MAX_BITS_PER_MSG : integer := DATA_WIDTH * MAX_WORDS_PER_MSG;
 constant MSG_FREQ : integer := TARGET_BIT_RATE / MAX_BITS_PER_MSG;
--- constant MSG_COOLDOWN : integer := SYSTEM_CLK_FREQ / MSG_FREQ;
+constant MSG_COOLDOWN : integer := SYSTEM_CLK_FREQ / MSG_FREQ;
 -- constant MSG_COOLDOWN : integer := 125000;
 -- constant MSG_COOLDOWN : integer := 100000;
 -- constant MSG_COOLDOWN : integer := 20000;
 -- constant MSG_COOLDOWN : integer := 1000;
-constant MSG_COOLDOWN : integer := 400;
+-- constant MSG_COOLDOWN : integer := 400;
 			-- msgdma_0_st_sink_data           => msgdma_0_st_sink_data,
 			-- msgdma_0_st_sink_valid          => msgdma_0_st_sink_valid,
 			-- msgdma_0_st_sink_ready          => msgdma_0_st_sink_ready

@@ -199,7 +199,7 @@ static int msgdma_open(struct inode *inode, struct file *file)
     int i;
     size_t desc_size = sizeof(struct msgdma_desc);
     u32 slot_size = 1024; // Assuming 1KB per message slot in your 4KB buffer
-    u32 max_msg_bytes = 180*4; // 720 bytes (The most the FPGA will send)
+    u32 max_msg_bytes = 960; // 720 bytes (The most the FPGA will send)
     // 3. Re-initialize the Descriptor Ring to default state
     for (i = 0; i < 64; i++) {
         struct msgdma_desc *d = &mdev->desc_virt[i];
@@ -353,7 +353,7 @@ static int msgdma_probe(struct platform_device *pdev)
     int i;
     size_t desc_size = sizeof(struct msgdma_desc);
     u32 slot_size = 1024; // Assuming 1KB per message slot in your 4KB buffer
-    u32 max_msg_bytes = 180*4; // 720 bytes (The most the FPGA will send)
+    u32 max_msg_bytes = 960; // 720 bytes (The most the FPGA will send)
 
     mdev->desc_virt = dma_alloc_coherent(&pdev->dev, PAGE_SIZE, &mdev->desc_phys, GFP_KERNEL);
     if (!mdev->desc_virt) return -ENOMEM;
