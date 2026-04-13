@@ -2,8 +2,8 @@ use std::net::{TcpListener, TcpStream};
 use std::fs::OpenOptions;
 use memmap2::MmapOptions;
 use std::io::Write;
-use std::thread::sleep;
-use std::time::Duration;
+// use std::thread::sleep;
+// use std::time::Duration;
 use std::io::Read;
 use std::ptr::{read_volatile, write_volatile};
 
@@ -79,7 +79,7 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
     let mut processed_indices = Vec::new(); // Track which ones to give back
 
     
-    let mut bluu = 0;
+    // let mut bluu = 0;
     loop {
         // 5000ms timeout. If FPGA hangs, we don't deadlock.
         match poll(&mut [poll_fd.clone()], 5000 as u16) {
@@ -116,9 +116,9 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
                     // println!("nvaaath {}", bla);
                 if bla == 64 {
                     // bluu += 1;
-                    // if bluu > 1000 {
-                        // println!("aaaalar!m");
-                        // bluu = 0;
+                    // if bluu > 10 {
+                    //     println!("aaaalar!m");
+                    //     bluu = 0;
                     // }
                     break;
                 }
@@ -127,14 +127,10 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
             }
         }
 
-    // 2. Send stage (One big burst)
-                        // println!("alar!m");
-    if !batch.is_empty() {
-        if let Err(e) = stream.write_all(&batch) {
-            return Err(e);
+        if !batch.is_empty() {
+            if let Err(e) = stream.write_all(&batch) {
+                return Err(e);
         }
-
-        // 3. Release stage (Only now do we give them back to FPGA)
         for &idx in &processed_indices {
             let desc = unsafe { &mut *desc_array.add(idx) };
             let ctrl = unsafe { read_volatile(&desc.control) };

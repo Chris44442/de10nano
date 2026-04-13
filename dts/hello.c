@@ -82,7 +82,7 @@ static irqreturn_t msgdma_irq_handler(int irq, void *dev_id)
     status = ioread32(mdev->prefetcher + 0x10);
 
     // 2. Print the message (Note: Use pr_info_ratelimited if data is fast!)
-    pr_info(DRIVER_NAME ": IRQ triggered! Status: 0x%08x\n", status);
+    // pr_info(DRIVER_NAME ": IRQ triggered! Status: 0x%08x\n", status);
 
     mdev->data_ready = 1;
     wake_up_interruptible(&mdev->wait_queue);
