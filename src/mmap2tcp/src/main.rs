@@ -1,9 +1,12 @@
 use std::net::{TcpListener, TcpStream};
+use std::net::UdpSocket;
 use std::fs::OpenOptions;
 use memmap2::MmapOptions;
 use std::io::Write;
 use std::io::Read;
 use std::ptr::{read_volatile, write_volatile};
+
+const UDP_TARGET_PORT : u16 = 8082;
 
 fn main() {
     let _ = run_server();
@@ -47,6 +50,11 @@ use nix::poll::{poll, PollFd, PollFlags};
 use std::os::unix::io::{AsRawFd, BorrowedFd};
 
 fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
+
+    let mut client_addr = stream.peer_addr()?;
+    client_addr.set_port(UDP_TARGET_PORT);
+    let udp_socket = UdpSocket::bind("0.0.0.0:0")?;
+
     stream.set_nodelay(true)?; 
     let mut f = OpenOptions::new().read(true).write(true).open(DEV_MSGDMA_PATH)?;
     let desc_mmap = unsafe { MmapOptions::new().offset(0x10000).len(0x1000).map_mut(&f)? };
@@ -80,7 +88,10 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
                 }
                 let start = tail * SLOT_SIZE;
                 let data_slice = &data_mmap[start .. start + actual_len];
-                let _ = stream.write_all(&data_slice);
+
+                udp_socket.send_to(data_slice, client_addr)?;
+                // let _ = stream.write_all(&data_slice);
+
                 unsafe { write_volatile(&mut desc.control, desc_control | (1 << 30)); }
                 tail = (tail + 1) % 64;
             } else {
