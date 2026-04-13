@@ -2,8 +2,6 @@ use std::net::{TcpListener, TcpStream};
 use std::fs::OpenOptions;
 use memmap2::MmapOptions;
 use std::io::Write;
-// use std::thread::sleep;
-// use std::time::Duration;
 use std::io::Read;
 use std::ptr::{read_volatile, write_volatile};
 
@@ -14,17 +12,13 @@ fn main() {
 fn run_server() -> std::io::Result<()> {
     let listener = TcpListener::bind("0.0.0.0:8081")?;
     println!("Listening on 0.0.0.0:8081");
-
     loop {
         match listener.accept() {
             Ok((stream, addr)) => {
                 println!("Client connected: {}", addr);
-
-                // Handle connection in same thread (simple)
                 if let Err(e) = handle_client(stream) {
                     eprintln!("Connection error: {}", e);
                 }
-
                 println!("Client disconnected");
             }
             Err(e) => {
@@ -52,37 +46,20 @@ struct MsgdmaStandardDesc {
 use nix::poll::{poll, PollFd, PollFlags};
 use std::os::unix::io::{AsRawFd, BorrowedFd};
 
-// use std::hint::black_box;
-//
-// use std::sync::mpsc;
-// use std::thread;
-
 fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
     stream.set_nodelay(true)?; 
     let mut f = OpenOptions::new().read(true).write(true).open(DEV_MSGDMA_PATH)?;
     let desc_mmap = unsafe { MmapOptions::new().offset(0x10000).len(0x1000).map_mut(&f)? };
     let first_desc_ptr = desc_mmap.as_ptr() as *mut u32;
-
     let data_mmap = unsafe { MmapOptions::new().offset(0x0).len(0x10000).map(&f)? };
-
-    println!("Hardware is set up, waiting for IRQ ...");
 
     let mut dummy = [0u8; 1];
     let mut tail = 0; // CPU's current position in the ring
-
-    // Prepare for polling the file descriptor
     let poll_fd = PollFd::new( unsafe { BorrowedFd::borrow_raw(f.as_raw_fd()) }, PollFlags::POLLIN);
-
     let desc_array: *mut MsgdmaStandardDesc = first_desc_ptr as *mut MsgdmaStandardDesc;
 
-    let mut batch = Vec::new(); // Temporary storage for slices
-    let mut processed_indices = Vec::new(); // Track which ones to give back
-
-    
-    // let mut bluu = 0;
     loop {
-        // 5000ms timeout. If FPGA hangs, we don't deadlock.
-        match poll(&mut [poll_fd.clone()], 5000 as u16) {
+        match poll(&mut [poll_fd.clone()], 5000 as u16) { // 5s timeout
             Ok(n) if n > 0 => {
                 f.read(&mut dummy)?; // IRQ received, clear the wait queue signal
             }
@@ -92,8 +69,6 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
             }
             Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
         }
-
-        let mut bla = 0;
         loop {
             let desc = unsafe { &mut *desc_array.add(tail) };
             let desc_control = unsafe { read_volatile(&desc.control) };
@@ -104,102 +79,14 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
                     break;
                 }
                 let start = tail * SLOT_SIZE;
-                batch.extend_from_slice(&data_mmap[start .. start + actual_len]);
-
-            // println!("5 seconds");
-                // abc.push(&data_mmap[start .. start + actual_len]);
-                
-                // Store index to release later
-                processed_indices.push(tail);
+                let data_slice = &data_mmap[start .. start + actual_len];
+                let _ = stream.write_all(&data_slice);
+                unsafe { write_volatile(&mut desc.control, desc_control | (1 << 30)); }
                 tail = (tail + 1) % 64;
-                bla += 1;
-                    // println!("nvaaath {}", bla);
-                if bla == 64 {
-                    // bluu += 1;
-                    // if bluu > 10 {
-                    //     println!("aaaalar!m");
-                    //     bluu = 0;
-                    // }
-                    break;
-                }
             } else {
                 break;
             }
         }
-
-        if !batch.is_empty() {
-            if let Err(e) = stream.write_all(&batch) {
-                return Err(e);
-        }
-        for &idx in &processed_indices {
-            let desc = unsafe { &mut *desc_array.add(idx) };
-            let ctrl = unsafe { read_volatile(&desc.control) };
-            unsafe { write_volatile(&mut desc.control, ctrl | (1 << 30)); }
-        }
-        batch.clear();
-        processed_indices.clear();
-    }
     }
 }
 
-
-// use std::fs::OpenOptions;
-// use std::io::{Read, Result};
-// use std::ptr::{read_volatile, write_volatile};
-// use std::thread::sleep;
-// use std::time::Duration;
-// use memmap2::MmapOptions;
-//
-// const SLOT_SIZE : usize = 1024;
-//
-// fn main() -> Result<()> {
-//     let mut f = OpenOptions::new().read(true).write(true).open("/dev/msgdma_test")?;
-//     let desc_mmap = unsafe { MmapOptions::new().offset(0x2000).len(0x1000).map_mut(&f)? };
-//     let first_desc_ptr = desc_mmap.as_ptr() as *mut u32;
-//
-//     let data_mmap = unsafe { MmapOptions::new().offset(0x0000).len(0x2000).map(&f)? };
-//
-//     println!("Mmap for Descriptor and Data Buffer done");
-//     println!("Waiting for first IRQ");
-//
-//     let mut dummy = [0u8; 1];
-//     let mut tail = 0; // CPU's current position in the ring
-//
-//     loop {
-//         f.read(&mut dummy)?; // Wait for IRQ
-//
-//         loop {
-//             let current_desc_ptr = unsafe { first_desc_ptr.add(tail * 8) };
-//             let ctrl_ptr = unsafe { current_desc_ptr.add(7) };
-//
-//             let ctrl = unsafe { read_volatile(ctrl_ptr) };
-//
-//             if (ctrl & (1 << 30)) == 0 {
-//                 // Actual bytes transferred is at Word 4 (0x10)
-//                 let actual_len = unsafe { read_volatile(current_desc_ptr.add(4)) } as usize;
-//
-//                 // Get the slice for this slot
-//                 let start = tail * SLOT_SIZE;
-//                 let data_slice = &data_mmap[start .. start + actual_len];
-//
-//                 println!("Slot {}: Received {} bytes", tail, actual_len);
-//
-//                 // Print as 64-bit Hex Words
-//                 for (i, chunk) in data_slice.chunks_exact(8).enumerate() {
-//                     let word = u64::from_be_bytes(chunk.try_into().unwrap());
-//                     println!("  [{:03}] 0x{:016x}", i, word);
-//                 }
-//
-//                 // Reset: Set OWN_BY_HW (bit 30) back to 1
-//                 unsafe { write_volatile(ctrl_ptr, ctrl | (1 << 30)); }
-//
-//                 tail = (tail + 1) % 8;
-//                 sleep(Duration::from_millis(1000));
-//
-//             } else {
-//                 break; // Catch up complete
-//             }
-//         }
-//     }
-// }
-//
