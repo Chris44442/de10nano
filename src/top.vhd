@@ -89,9 +89,9 @@ constant SYSTEM_CLK_FREQ : integer := 50_000_000;
 constant DATA_WIDTH : integer := 64;
 
 constant TARGET_BIT_RATE : integer := 2_500_000;
-constant MAX_WORDS_PER_MSG : integer := 100;
-constant MAX_BITS_PER_MSG : integer := DATA_WIDTH * MAX_WORDS_PER_MSG;
-constant MSG_FREQ : integer := TARGET_BIT_RATE / MAX_BITS_PER_MSG;
+constant AVERAGE_WORDS_PER_MSG : integer := 77;
+constant AVERAGE_BITS_PER_MSG : integer := DATA_WIDTH * AVERAGE_WORDS_PER_MSG;
+constant MSG_FREQ : integer := TARGET_BIT_RATE / AVERAGE_BITS_PER_MSG;
 constant MSG_COOLDOWN : integer := SYSTEM_CLK_FREQ / MSG_FREQ;
 -- constant MSG_COOLDOWN : integer := 125000;
 -- constant MSG_COOLDOWN : integer := 100000;
